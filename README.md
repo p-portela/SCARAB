@@ -102,6 +102,18 @@ first. On Windows they run natively, on Linux through Wine.
 | G3 | wrapper self-test: QI routing, refcounting, validation, unknown-slot logging |
 | G4 | integration: console DMA command list created through PC D3D12, serving its console IID |
 | G5 | tooling unit tests: PE parser, header generator, IID extraction, catalogue completeness |
+| G6 | shader emitter: HLSL → DXC → real DXIL, container verified part-by-part (skips if the vendor DXC is absent) |
+
+## Shader target: DXIL, not SPIR-V
+
+The console shader container and a DXC-produced PC shader are **the same container** —
+same `DXBC` fourcc, same part layout, same nested `DXIL` tag, and at the same payload
+offset (+24) the console puts `XDAT`→zlib→FSSM microcode where the PC puts LLVM
+bitcode. So the target is **DXIL (LLVM bitcode, SM 6.x) in a DXBC container**, which is
+what both backends consume: Microsoft's D3D12 runtime on Windows, and vkd3d-proton on
+Linux (which then compiles it to SPIR-V itself). SPIR-V is the Vulkan IR, one layer
+below where this layer operates; targeting it would mean reimplementing the whole
+D3D12 API on Vulkan. Rationale and version policy: [docs/ROADMAP.md](docs/ROADMAP.md) §0.
 
 ## Layout
 
@@ -118,6 +130,7 @@ docs/                          architecture, findings, provenance
 
 ## Documentation
 
+- [docs/ROADMAP.md](docs/ROADMAP.md) — the bytecode decision, phases, gates and risks
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — the layered design, and why each seam is
   where it is
 - [docs/BUILDING.md](docs/BUILDING.md) — Windows and Linux, backends, troubleshooting

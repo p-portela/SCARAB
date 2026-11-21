@@ -69,6 +69,18 @@ add_test(NAME G4_integration
 set_tests_properties(G3_wrapper_selftest G4_integration PROPERTIES
   WORKING_DIRECTORY "$<TARGET_FILE_DIR:integration_test>")
 
+# G6: the shader emitter half of the pipeline. Produces real DXIL with DXC and
+# verifies the container part-by-part. SKIPs (77) when the vendor DXC is not
+# linked, so the suite stays meaningful on a machine without the artifacts.
+if(TARGET dxc_emit_test)
+  add_test(NAME G6_dxil_emitter
+    COMMAND ${_launch} "$<TARGET_FILE:dxc_emit_test>"
+            "${SCARAB_VENDOR}/x64_dx12/dxcompiler.dll" "test.dxil")
+  set_tests_properties(G6_dxil_emitter PROPERTIES
+    SKIP_RETURN_CODE 77
+    WORKING_DIRECTORY "$<TARGET_FILE_DIR:dxc_emit_test>")
+endif()
+
 # G2 is the build itself: the wrapper compiles only if `override` matches the
 # real header for all 53 device and 76 command-list methods. There is nothing
 # left to run, which is the point - it cannot pass while being wrong.

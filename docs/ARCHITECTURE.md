@@ -171,6 +171,8 @@ they came from:
 | E11 | memory-model deltas are structural | DCC/HTILE/indirect-buffer flags in the UMD; `xg_xs.dll` encode/decode |
 | E12 | presentation is console-specific | `DXGIXPresentArray` and friends; queue `PresentX` with planes |
 | E13 | two gates remain outside this project | title exe absent by design; `the system image (encrypted)` encrypted, retail ODK |
+| E14 | the console shader container is the standard DXBC/DXIL container | same fourcc, same parts (`SFI0 ISG1 OSG1 PSV0 HASH DXIL`), same nested `DXIL` tag; at payload+24 the console has `XDAT`→zlib→FSSM where DXC has `BC C0 DE`→bitcode. Measured by comparing a console shader against a locally produced DXC output |
+| E15 | we can produce real DXIL locally | `dxcompiler.dll` under Wine compiles HLSL to a container whose DXIL part holds LLVM bitcode — gate G6 |
 
 ## 7. Known risks
 
