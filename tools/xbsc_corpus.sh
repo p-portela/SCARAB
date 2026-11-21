@@ -34,6 +34,9 @@ SEL=$(wc -l < "$OUT/sel.txt")
 echo "corpus=$TOTAL selected=$SEL chunk=$CHUNK"
 
 sed "s|^|Z:|" "$OUT/sel.txt" > "$OUT/manifest.txt"
+# drop chunks from a previous run: `split` only writes as many as this run needs, so
+# leftovers would be reprocessed and inflate the record count.
+rm -f "$OUT"/chunk-*
 split -l "$CHUNK" -d -a 4 "$OUT/manifest.txt" "$OUT/chunk-"
 
 : > "$OUT/vendor.txt"
