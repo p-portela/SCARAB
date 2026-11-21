@@ -5,9 +5,6 @@ SHA-256: `4792972d0647249f1706377d2d228523e9a37b6e3102b4a3500e1231f2e4b09b`
 Size: 51,576 bytes. PE32+, x86-64, 6 sections. **Authenticode signed** (cert table 10,616 bytes).
 PDB name embedded: `d3d12_xs.pdb`. No `.xbld` section.
 
-Provenance note: recovered from a [redacted] depot (`app [redacted]`, `depot [redacted]`,
-`manifest [redacted]`) on an account that owns the title, via [redacted].
-
 ## This closes blocked item 3
 
 Item 3 was: *"`d3d12_xs.dll` is not obtainable — it lives in the SystemImage volume inside

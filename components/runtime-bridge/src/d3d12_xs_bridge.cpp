@@ -3,8 +3,8 @@
 // ---------------------------------------------------------------------------
 // d3d12_xs.dll  --  console (Scarlett) D3D12 runtime  ->  Windows D3D12 bridge
 // ---------------------------------------------------------------------------
-// Drop-in replacement for the console runtime shipped as
-//      [redacted]/d3d12_xs.dll   (10.0.26100.6247, 116 exports)
+// Drop-in replacement for the console runtime d3d12_xs.dll
+// (10.0.26100.6247, 116 exports), supplied by the user, never vendored.
 //
 // Strategy (Design A): do NOT reimplement the D3D12 object model. The console
 // COM interfaces carry byte-identical GUIDs to the PC ones (verified: 28/28

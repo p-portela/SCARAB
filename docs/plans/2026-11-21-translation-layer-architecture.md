@@ -118,7 +118,6 @@ scarab/
     test_tools.py                 tool unit tests (parser, GUID extraction, generator)
   docs/
     ARCHITECTURE.md               this plan's §2, kept current
-    PROVENANCE.md                 where the vendor stack came from; nothing is bundled
     d3d12-xs-bridge.md            runtime bridge detail
     d3d12-xs-wrapper.md           extension wrapper detail
     console-extension-catalogue.tsv  105 methods + 106 symbols, with evidence
@@ -144,7 +143,7 @@ Repo at `~/Documents/scarab`. Game artifacts stay where they are
    Reason: code that *owns* an interface should inherit it so the compiler enforces
    layout; code that only forwards free functions needs no headers at all.
 3. **No vendor binaries or game data in the repo, ever.** Reason: they are Microsoft's
-   and the publisher's. `scripts/link-artifacts.sh` + `docs/PROVENANCE.md` instead.
+   and the publisher's. `scripts/link-artifacts.sh` instead.
 4. **CMake with a mingw toolchain file**, keeping thin `scripts/build.sh`. Reason:
    standard, lets tests be CTest targets, and the toolchain file documents the exact
    cross-build. The prototype build scripts remain for reference.
@@ -204,7 +203,7 @@ Bite-sized, in order. Each ends with a commit.
 
 ### Task 6: documentation
 - `README.md`: what it is, the E1 insight, build, test, status matrix, caveats.
-- `docs/ARCHITECTURE.md` from §2; `docs/PROVENANCE.md`; `CONTRIBUTING.md` short.
+- `docs/ARCHITECTURE.md` from §2; `CONTRIBUTING.md` short.
 - Verify: a reader can go from clone to green tests using only README.
 
 ### Task 7: define the unstarted seams
@@ -226,7 +225,7 @@ Bite-sized, in order. Each ends with a commit.
 | Memory model (unified memory, DCC, tiling) | rendering correct but wrong/absent compression, or crashes | `memory-adapter` seam; `xg_xs.dll` is the reference for swizzle/DCC semantics |
 | Shader translation incomplete (decoder gaps, no validation layer) | nothing draws | alignment hypothesis first (E9), then vendor disassembler as oracle (E8) |
 | Title exe and `the system image (encrypted)` gates | no end-to-end run, ever, until they open | deliberately out of scope; everything is built so it can advance without them |
-| Legal | shipping MS/the publisher binaries | nothing bundled; PROVENANCE documents acquisition; note xvdtool's own policy on leaked material |
+| Legal | shipping MS/the publisher binaries | nothing bundled; note xvdtool's own policy on leaked material |
 | Wine-only testing | real Windows behaviour unverified | state it plainly in README; keep tests runnable on Windows too |
 
 **Open questions**

@@ -2,8 +2,9 @@
 
 This is an independent interoperability layer. It is **not affiliated with,
 authorised by, sponsored by or endorsed by** any platform holder, hardware
-vendor or game publisher. It ships no third-party binaries and no game content;
-see `docs/PROVENANCE.md` for exactly what it does and does not contain.
+vendor or game publisher. It ships no third-party binaries and no game content:
+everything it builds or analyses against is supplied by the user, out of band, and
+lives in a directory the user controls.
 
 Third-party names appear in this repository only where they are needed to
 describe an interface or a tool this project interoperates with, in their

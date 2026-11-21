@@ -20,8 +20,7 @@ leaves the recovered console flags unnumbered for exactly this reason.
 ## Ground rules
 
 1. **Never commit vendor binaries or game content.** `.gitignore` covers `vendor/` and
-   `corpora/`; if you add a new artefact, add it there too and note it in
-   [docs/PROVENANCE.md](docs/PROVENANCE.md).
+   `corpora/`; if you add a new artefact, add it there too.
 2. **Never weaken a gate to make a change pass.** If G1 (export contract) fails, the
    bridge is not a drop-in replacement any more; fix the code, not the test.
 3. **Evidence or it didn't happen.** A claim about the console surface needs a
@@ -98,7 +97,7 @@ number to give it.
 This project is GPL-3.0-only (see `LICENSE`). By contributing you agree your
 contribution is licensed under the same terms, and that you have the right to submit it.
 Do not paste code from a source whose licence is incompatible with the GPL, and do not
-commit third-party binaries or game content (see `docs/PROVENANCE.md`).
+commit third-party binaries or game content.
 
 ## Reporting a finding
 
@@ -111,4 +110,3 @@ it belongs rather than leaving it in a chat log:
 | a method's class or order | `components/extension-wrapper/console_extensions.h` |
 | a new name or symbol | regenerate `components/extension-wrapper/docs/console-extension-catalogue.tsv` |
 | a shader-format fact | `docs/fssm-analysis.md` |
-| an artefact's origin or hash | `docs/PROVENANCE.md` |

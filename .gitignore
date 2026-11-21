@@ -23,7 +23,7 @@ gen_clist.inc
 # No leading-dot anchoring and no trailing slash: these entries are symbolic links
 # on a Linux checkout, and a `dir/` pattern does not match a symlink - which would
 # leave the link itself committable. Both trees are Microsoft's binaries and
-# the publisher's game data; see docs/PROVENANCE.md.
+# the publisher's game data.
 /vendor
 /corpora
 

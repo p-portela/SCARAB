@@ -52,10 +52,9 @@ on a PC. Everything above that seam is portable; the seam itself is not.
 
 ## 3. The console stack, now fully identified
 
-a retail PC game PC build ships the console graphics stack redist in `[redacted]/`, and
-it turns out to contain **the entire console graphics stack**. This was not
-obvious from file names — the identification comes from the binaries' own
-strings and export tables.
+The user-supplied console graphics stack turns out to be **the entire console
+graphics stack**, not just the runtime. This was not obvious from file names —
+the identification comes from the binaries' own strings and export tables.
 
 | file | size | what it actually is | evidence |
 |---|---|---|---|

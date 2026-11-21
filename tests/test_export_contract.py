@@ -35,7 +35,7 @@ def main():
         print("FAIL: no built d3d12_xs.dll found; build first")
         return 1
     if not os.path.exists(ref):
-        print("SKIP: reference runtime not present (%s) - see docs/PROVENANCE.md" % ref)
+        'SKIP: reference runtime not present (%s)'
         return 0
 
     cmd = [sys.executable, os.path.join(ROOT, "tools", "verify_exports.py"), built, ref]

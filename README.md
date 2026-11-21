@@ -80,8 +80,7 @@ Full prerequisites, Wine setup, backend selection and a troubleshooting table:
 
 - **No vendor binaries or game data, ever.** The repo builds against Microsoft's console
   console stack redistributables and analyses a game's extracted content. Neither is
-  included; the link scripts connect them from a directory you supply. See
-  [docs/PROVENANCE.md](docs/PROVENANCE.md).
+  included; the link scripts connect them from a directory you supply.
 - **Not finished, and it will not run a title today.** Two gates are outside this
   project's control: the title executable (absent from the content rip by design) and the
   system OS image (`the system image (encrypted)`, encrypted with the retail ODK). Everything is built so it
@@ -141,7 +140,6 @@ docs/                          architecture, findings, provenance
   disposition table, what is proven vs assumed
 - [docs/d3d12-xs-wrapper.md](docs/d3d12-xs-wrapper.md) — the extension surface: catalogue,
   provenance of every console IID, the one dangerous assumption
-- [docs/PROVENANCE.md](docs/PROVENANCE.md) — where every artefact comes from
 - [docs/fssm-analysis.md](docs/fssm-analysis.md) — what the console shaders actually are
 - [docs/isa/](docs/isa/) — the console shader ISA as recovered from the vendor's compiler
 
@@ -152,6 +150,5 @@ Portela. Every first-party file is `GPL-3.0-only` (SPDX headers); the one except
 `components/shader-bridge/third_party/dxc/dxcapi.h`, which keeps Microsoft's own
 University of Illinois Open Source licence.
 
-No third-party binaries and no game content are redistributed by this repository; see
-[docs/PROVENANCE.md](docs/PROVENANCE.md). Third-party names are used descriptively, see
-[NOTICE.md](NOTICE.md).
+No third-party binaries and no game content are redistributed by this repository.
+Third-party names are used descriptively, see [NOTICE.md](NOTICE.md).

@@ -35,7 +35,7 @@ Exit criteria
 | 4 | wrapper vtable layout proven by the compiler, not asserted | **met** — G2 (53 + 76 signatures via `override`) |
 | 5 | backend identity correct on both hosts (the Linux path really is the D3D12 → Vulkan bridge) | **met** — G7 both directions |
 | 6 | the repo builds from a fresh clone with only the documented artifact dir | **met** — clean-clone run, 6/6 |
-| 7 | no third-party binaries, no game content, no vendor export table committed | **met** — `docs/PROVENANCE.md`; the `.def` is generated |
+| 7 | no third-party binaries, no game content, no vendor export table committed | **met** — no vendor blob is tracked; the `.def` is generated |
 
 Blocked only by #2, which needs a Windows machine.
 

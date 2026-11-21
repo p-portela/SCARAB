@@ -18,9 +18,8 @@ include(${CMAKE_CURRENT_LIST_DIR}/cmake/scarab-platform.cmake)
 
 # ---------------------------------------------------------------------------
 # Artifacts: the Microsoft binaries this project builds against and the game
-# data it analyses. They are NEVER vendored into the repository (see
-# docs/PROVENANCE.md); scripts/link-artifacts.{sh,ps1} link them in from an
-# artifacts directory.
+# data it analyses. They are NEVER vendored into the repository;
+# scripts/link-artifacts.{sh,ps1} link them in from an artifacts directory.
 # ---------------------------------------------------------------------------
 set(SCARAB_ARTIFACTS "$ENV{SCARAB_ARTIFACTS}" CACHE PATH
     "Directory holding the vendor/ and corpora/ trees (default: ~/Documents/scarab-artifacts)")

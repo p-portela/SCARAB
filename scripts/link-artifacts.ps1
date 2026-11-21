@@ -32,7 +32,7 @@ if (-not (Test-Path $Artifacts)) {
 }
 $vendor = Join-Path $Artifacts "vendor"
 if (-not (Test-Path $vendor)) {
-  throw "missing $vendor - see docs/PROVENANCE.md"
+  throw "missing $vendor"
 }
 
 function New-ArtifactLink {

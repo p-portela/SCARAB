@@ -19,7 +19,7 @@ if [ ! -d "$ART" ]; then
   exit 1
 fi
 
-[ -d "$ART/vendor" ] || { echo "missing $ART/vendor (see docs/PROVENANCE.md)" >&2; exit 1; }
+[ -d "$ART/vendor" ] || { echo "missing $ART/vendor" >&2; exit 1; }
 ln -sfn "$ART/vendor" "$ROOT/vendor"
 
 mkdir -p "$ROOT/corpora"

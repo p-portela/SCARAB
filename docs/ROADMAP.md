@@ -196,8 +196,7 @@ Microsoft publishes Linux builds of DXC — `dxc`, `libdxcompiler.so`, `libdxil.
 the `microsoft/DirectXShaderCompiler` releases, in the `Microsoft.Direct3D.DXC` NuGet
 package, and as a distro package (`dxc`). Steps:
 
-1. Fetch and unpack the Linux DXC release; record it in `docs/PROVENANCE.md` as a
-   build-time tool (not vendored).
+1. Fetch and unpack the Linux DXC release as a build-time tool (not vendored).
 2. Add `SCARAB_DXC_ROOT` to the platform module; resolve `libdxcompiler.so`/
    `libdxil.so` from it.
 3. Add a native Linux target for the emitter test that `dlopen`s `libdxcompiler.so`
