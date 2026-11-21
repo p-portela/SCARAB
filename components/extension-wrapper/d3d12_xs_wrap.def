@@ -1,0 +1,7 @@
+; d3d12_xs_wrap.dll -- the console extension wrapper layer, built as its own
+; component so the bridge can load it optionally and its own export contract
+; stays exactly what the console runtime published.
+EXPORTS
+    d3d12xs_wrap_device             @1
+    d3d12xs_wrapper_selftest        @2
+    d3d12xs_wrapper_set_qi_audit    @3

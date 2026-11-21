@@ -1,0 +1,21 @@
+[
+ {"note": "CORRECTION: an earlier reading suggested IID slot 47 of the runtime's table (0x3b28, 344488b7-6846-474b-b989-f027448245e0) was an unexported console IID. It is not - it is IID_ID3D12Debug, exported at ordinal 76. No RECOVERED entry remains. Proven console-specific IIDs are exactly the exported X-suffixed set plus IID_ID3D12ConsDmaCommandList and IID_IGraphicsUnknown, all in src/iid_console.inc."},
+ {"guid": "30bc77b9-8379-4b25-95de-b8588c42275d", "name": "IID_ID3D12ConsDmaCommandList", "provenance": "PROVEN", "evidence": "exported by the console runtime at ordinal 100; UMD requires __uuidof(ID3D12ConsDmaCommandList) for D3D12CONS_COMMAND_LIST_TYPE_DMA"},
+ {"guid": "aceeea63-e0a9-4a1c-bbec-71b2f485f758", "name": "IID_IGraphicsUnknown", "provenance": "PROVEN", "evidence": "exported at ordinal 115"},
+ {"guid": "177700f9-876a-4436-b368-36a604f82cef", "name": "IID_ID3D11DeviceX", "provenance": "PROVEN", "evidence": "exported at ordinal 48"},
+ {"guid": "48800095-7134-4be7-9186-b86becb26477", "name": "IID_ID3D11DeviceContextX", "provenance": "PROVEN", "evidence": "exported at ordinal 47"},
+ {"guid": "a6332ddb-8e02-427d-b0b7-34a1e61a6488", "name": "IID_ID3D11DmaEngineContextX", "provenance": "PROVEN", "evidence": "exported at ordinal 49"},
+ {"guid": "9458fe06-c78d-47f7-96a0-ec7b727be1e9", "name": "IID_ID3D11PerformanceContextX", "provenance": "PROVEN", "evidence": "exported at ordinal 54"},
+ {"guid": "88671610-712e-4f1e-84ab-01b5948bd373", "name": "IID_ID3D11PerformanceDeviceX", "provenance": "PROVEN", "evidence": "exported at ordinal 55"},
+ {"guid": "b2daad8b-03d4-4dbf-95eb-32ab4b63d0ab", "name": "IID_ID3D11UserDefinedAnnotationX", "provenance": "PROVEN", "evidence": "exported at ordinal 69"},
+ {"guid": "f9f6a732-c5f8-4a57-ba36-eae7c27ba74a", "name": "IID_ID3D11CounterSetX", "provenance": "PROVEN", "evidence": "exported at ordinal 39"},
+ {"guid": "806ceee4-280b-43d9-9008-b4fdf7febee2", "name": "IID_ID3D11CounterSampleX", "provenance": "PROVEN", "evidence": "exported at ordinal 38"},
+ {"note": "The IIDs for ID3D12ConsComputeCommandList / ...6(Compute) / ...8(Compute) / ID3D12ConsCopyCommandList6 are NOT exported by the runtime and are NOT recovered. Any QueryInterface for them is logged at runtime by the wrapper's audit hook, which is how they will be identified from the title."},
+ {"guid": "8b4f173b-2fea-4b80-8f58-4307191ab95d", "name": null, "provenance": "CANDIDATE", "evidence": "UMD .rdata 0x1ae060, 16B-aligned run immediately after IID_ID3D12Device4; v4 RFC4122; not referenced from UMD code and not present in the runtime"},
+ {"guid": "c70b221b-40e4-4a17-89af-025a0727a6dc", "name": null, "provenance": "CANDIDATE", "evidence": "same run"},
+ {"guid": "5c014b53-68a1-4b9b-8bd1-dd6046b9358b", "name": null, "provenance": "CANDIDATE", "evidence": "same run"},
+ {"guid": "728f1fa2-ea11-4a9f-9b52-9b42a484d5c9", "name": null, "provenance": "CANDIDATE", "evidence": "same run"},
+ {"guid": "4c80e962-f032-4f60-bc9e-ebc2cfa1d83c", "name": null, "provenance": "CANDIDATE", "evidence": "same run"},
+ {"guid": "517f8718-aa66-49f9-b02b-a7ab89c06031", "name": null, "provenance": "CANDIDATE", "evidence": "same run"},
+ {"guid": "5405c344-d457-444e-b4dd-2366e45aee39", "name": null, "provenance": "CANDIDATE", "evidence": "same run"}
+]

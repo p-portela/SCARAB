@@ -1,0 +1,24 @@
+# build outputs
+build/
+cmake-build-*/
+*.o
+*.a
+*.lib
+*.exp
+*.exe
+*.dll
+*.log
+
+# generated from the real header / the genuine runtime - not sources
+components/extension-wrapper/src/gen_device.inc
+components/extension-wrapper/src/gen_clist.inc
+
+# linked artifact trees (see scripts/link-artifacts.sh) - never committed.
+# These are Microsoft's binaries and the publisher's game data; the repository must
+# not contain them. See docs/PROVENANCE.md.
+vendor/
+corpora/
+
+# python
+__pycache__/
+*.pyc

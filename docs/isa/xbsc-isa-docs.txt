@@ -1,0 +1,856 @@
+        <requestedExecutionLevel level='asInvoker' uiAccess='false' />
+ // If a source thread is disabled, it will not propagate data.
+ // K is a 16-bit literal constant stored in the following literal DWORD. @text 
+ // Note: there's no IEEE special case here like there is for V_MAX_F16.
+ // Note: there's no IEEE special case here like there is for V_MAX_F32.
+ // Note: there's no IEEE special case here like there is for V_MAX_F64.
+ // Round-toward-zero regardless of current round mode setting in hardware. @text 
+ // select the same destination thread, the highest-numbered
+ <subcommand> -help" to get more help on a specific subcommand
+ @code D.f = S0.f * K + S1.f. // K is a 32-bit literal constant. @text 
+ @code D.f = S0.f * S1.f + K. // K is a 32-bit literal constant. @text 
+ @code D.f32 = P10.f16 * S0.f32 + (S2.u32 >> (attr_word * 16)).f16. @text 
+ @code D.i = (S0.i >> S1.u[4:0]) & ((1 << S2.u[4:0]) - 1). @text 
+ @code D.i = signext((S0.i >> S1.u[4:0]) & ((1 << S1.u[22:16]) - 1));
+ @code D.i64 = signext((S0.i64 >> S1.u[5:0]) & ((1 << S1.u[22:16]) - 1));
+ @code D.u = ((S0.u[31:24] + S1.u[31:24] + S2.u[24]) >> 1) << 24
+ @code D.u = (S0.u >> S1.u[4:0]) & ((1 << S1.u[22:16]) - 1);
+ @code D.u = (S0.u >> S1.u[4:0]) & ((1 << S2.u[4:0]) - 1). @text 
+ @code D.u = abs(S0.i[31:16] - S1.i[31:16]) + abs(S0.i[15:0] - S1.i[15:0]) + S2.u. @text 
+ @code D.u64 = ((1ULL << S0.u[5:0]) - 1) << S1.u[5:0]. @text 
+ @code D.u64 = (S0.u64 >> S1.u[5:0]) & ((1 << S1.u[22:16]) - 1);
+ @code D.u[31:24] = byte_permute({S0.u, S1.u}, S2.u[31:24]);
+ @code PC = PC + signext(SIMM16 * 4) + 4. // short jump. @text 
+ @code RETURN_DATA = MEM[ADDR_BASE + OFFSET + M0.OFFSET + TID*4]. @text 
+ @code RETURN_DATA = swizzle(vgpr_data, offset1:offset0). @text 
+ @code addr = SGPR address appearing in instruction DST field;
+ @code addr = SGPR address appearing in instruction SRC0 field;
+ @code if(conditional_debug_system && conditional_debug_user) then
+ @code if(conditional_debug_system || conditional_debug_user) then
+ @code tmp = D.i; // save value so we can check sign bits for overflow later.
+ @code {MEM[ADDR + 12], MEM[ADDR + 8], MEM[ADDR + 4], MEM[ADDR]} = DATA[127:0]. @text 
+ @code {MEM[ADDR + 8], MEM[ADDR + 4], MEM[ADDR]} = DATA[95:0]. @text 
+ Backward permute. This does not access LDS memory and may be called even if no LDS memory is allocated to the wave. It uses LDS hardware to implement an arbitrary swizzle across threads in a wavefront.
+ Bit field extract. S0 is Data, S1[4:0] is field offset, S1[22:16] is field width. 
+ Bit field extract. S0 is Data, S1[5:0] is field offset, S1[22:16] is field width. 
+ Clear GPR indexing mode. Vector operations after this will not perform relative GPR addressing regardless of the contents of M0. This instruction does not modify M0. 
+ Compare and store. Caution, the order of src and cmp are the *opposite* of the BUFFER_ATOMIC_CMPSWAP opcode. 
+ Compare and store. Caution, the order of src and cmp are the *opposite* of the BUFFER_ATOMIC_CMPSWAP_X2 opcode. 
+ Compute the absolute value of difference between two values. 
+ Computes whole quad mode for an active/valid mask. If any pixel in a quad is active, all pixels of the quad are marked active. 
+ Conditional branch join point (end of conditional branch block). S0 is saved CSP value. See S_CBRANCH_G_FORK and S_CBRANCH_I_FORK for related instructions. 
+ Conditional branch using branch-stack. S0 = compare mask(vcc or any sgpr) and S1 = 64-bit byte address of target instruction. See also S_CBRANCH_JOIN. 
+ Conditional branch using branch-stack. S0 = compare mask(vcc or any sgpr), and SIMM16 = signed DWORD branch offset relative to next instruction. See also S_CBRANCH_JOIN. 
+ Counts how many bits in a row (from MSB to LSB) are the same as the sign bit. Returns -1 if all bits are the same. 
+ Counts how many zeros before the first one starting from the MSB. Returns -1 if there are no ones. 
+ Destination receives the byte address of the next instruction. Note that this instruction is always 4 bytes. 
+ Discard one dirty scalar data cache line. A cache line is 64 bytes. Normally, dirty cachelines (one which have been written by the shader) are written back to memory, but this instruction allows the shader to invalidate and not write back cachelines which it has previously written. This is a performance optimization to be used when the shader knows it no longer needs that data. Address is calculated the same as S_STORE_DWORD, except the 6 LSBs are ignored to get the 64 byte aligned address. LGKM count is incremented by 1 for this opcode. 
+ Discard two consecutive dirty scalar data cache lines. A cache line is 64 bytes. Normally, dirty cachelines (one which have been written by the shader) are written back to memory, but this instruction allows the shader to invalidate and not write back cachelines which it has previously written. This is a performance optimization to be used when the shader knows it no longer needs that data. Address is calculated the same as S_STORE_DWORD, except the 6 LSBs are ignored to get the 64 byte aligned address. LGKM count is incremented by 2 for this opcode. 
+ Double precision division fixup. S0 = Quotient, S1 = Denominator, S2 = Numerator.
+ Double precision division pre-scale. S0 = Input to scale (either denominator or numerator), S1 = Denominator, S2 = Numerator.
+ Dword swizzle, no data is written to LDS memory; See ds_opcodes.docx for details. 
+ Enable GPR indexing mode. Vector operations after this will perform relative GPR addressing based on the contents of M0. The structure SQ_M0_GPR_IDX_WORD may be used to decode M0. The raw contents of the S1 field are read and used to set the enable bits. S1[0] = VSRC0_REL, S1[1] = VSRC1_REL, S1[2] = VSRC2_REL and S1[3] = VDST_REL. 
+ Enables and disables VSKIP mode. When VSKIP is enabled, no VOP*/M*BUF/MIMG/DS/FLAT/EXP instuctions are issued. Note that VSKIPped memory instructions do not manipulate the waitcnt counters; as a result, if you have outstanding memory requests you may want to issue S_WAITCNT 0 prior to enabling VSKIP, otherwise you'll need to be careful not to count VSKIPped instructions in your waitcnt calculations. 
+ Enter the trap handler. This instruction may be generated internally as well in response to a host trap (HT = 1) or an exception. TrapID 0 is reserved for hardware use and should not be used in a shader-generated trap. 
+ Floating point compare and store that handles NaN/INF/denormal values. Caution, the order of src and cmp are the *opposite* of the BUFFER_ATOMIC_FCMPSWAP opcode. 
+ Floating point compare and store that handles NaN/INF/denormal values. Caution, the order of src and cmp are the *opposite* of the BUFFER_ATOMIC_FCMPSWAP_X2 opcode. 
+ Floating point maximum that handles NaN/INF/denormal values. Note that this opcode is slightly more general-purpose than BUFFER_ATOMIC_FMAX. 
+ Floating point maximum that handles NaN/INF/denormal values. Note that this opcode is slightly more general-purpose than BUFFER_ATOMIC_FMAX_X2. 
+ Floating point minimum that handles NaN/INF/denormal values. Note that this opcode is slightly more general-purpose than BUFFER_ATOMIC_FMIN. 
+ Floating point minimum that handles NaN/INF/denormal values. Note that this opcode is slightly more general-purpose than BUFFER_ATOMIC_FMIN_X2. 
+ Forward permute. This does not access LDS memory and may be called even if no LDS memory is allocated to the wave. It uses LDS hardware to implement an arbitrary swizzle across threads in a wavefront.
+ GDS Only: The GWS resource (rid) indicated will process this opcode by updating the counter and labeling the specified resource as a semaphore.
+ GDS Only: The GWS resource indicated will process this opcode by queueing it until barrier is satisfied. The number of waves needed is passed in as DATA of first valid thread.
+ GDS Only: The GWS resource indicated will process this opcode by queueing it until counter enables a release and then decrementing the counter of the resource as a semaphore.
+ GDS Only: The GWS resource indicated will process this opcode by updating the counter and labeling the resource as a semaphore.
+ GDS Only: The GWS resource indicated will process this opcode by updating the counter by the bulk release delivered count and labeling the resource as a semaphore.
+ Given a numerator and denominator, this opcode will appropriately scale inputs for division to avoid subnormal terms during Newton-Raphson correction algorithm. S0 must be the same value as either S1 or S2.
+ Given a numerator, denominator, and quotient from a divide, this opcode will detect and apply special case numerics, touching up the quotient if necessary. This opcode also generates invalid, denorm and divide by zero exceptions caused by the division. 
+ Half precision division fixup. S0 = Quotient, S1 = Denominator, S2 = Numerator.
+ If multiple sources map to the same destination lane, standard LDS arbitration rules determine which write wins.
+ Implements a short call, where the return address (the next instruction after the S_CALL_B64) is saved to D. Long calls should consider S_SWAPPC_B64 instead. Note that this instruction is always 4 bytes. 
+ Input denormals are never flushed, but output flushing is allowed. 
+ M0[15:12] = SIMM4; // this is the direct content of S1 field
+ Masked dword OR, D0 contains the mask and D1 contains the new value. 
+ Modify the mode used for vector GPR indexing. The raw contents of the source field are read and used to set the enable bits. SIMM16[0] = VSRC0_REL, SIMM16[1] = VSRC1_REL, SIMM16[2] = VSRC2_REL and SIMM16[3] = VDST_REL. 
+ Move from a relative source address. For example, the following instruction sequence will perform a move s5 <== s17:
+ Move from a relative source address. The index in M0.u must be even for this operation. 
+ Move to a relative destination address. For example, the following instruction sequence will perform a move s15 <== s7:
+ Move to a relative destination address. The index in M0.u must be even for this operation. 
+ Note that EXEC mask is applied to both VGPR read and write. If src_lane selects a disabled thread, zero will be returned.
+ Note that S_CMP_EQ_I32 and S_CMP_EQ_U32 are identical opcodes, but both are provided for symmetry. 
+ Note that S_CMP_LG_I32 and S_CMP_LG_U32 are identical opcodes, but both are provided for symmetry. 
+ Note that the S1 has a format of f16 since floating point literal constants are interpreted as 16 bit value for this opcode
+ Note that the S1 has a format of f16 since floating point literal constants are interpreted as 16 bit value for this opcode 
+ Note the address passed in is the thread ID multiplied by 4. This is due to a limitation in the DS hardware design.
+ Reduce a pixel mask to a quad mask. To perform the inverse operation see S_BITREPLICATE_B64_B32. 
+ Return from exception handler and continue. This instruction may only be used within a trap handler. 
+ Returns the bit position of the first one from the LSB, or -1 if there are no ones. 
+ Returns the bit position of the first zero from the LSB, or -1 if there are no zeros.
+ S0.u64 is a byte address of the instruction to jump to. Destination receives the byte address of the instruction immediately following the SWAPPC instruction. Note that this instruction is always 4 bytes. 
+ SCC = (((S0.u << 1) + S1.u) >= 0x100000000ULL ? 1 : 0). // unsigned overflow. 
+ SCC = (((S0.u << 2) + S1.u) >= 0x100000000ULL ? 1 : 0). // unsigned overflow. 
+ SCC = (((S0.u << 3) + S1.u) >= 0x100000000ULL ? 1 : 0). // unsigned overflow. 
+ SCC = (((S0.u << 4) + S1.u) >= 0x100000000ULL ? 1 : 0). // unsigned overflow. 
+ SCC = (S0.u + S1.u + SCC >= 0x100000000ULL ? 1 : 0). // unsigned overflow. 
+ SCC = (S0.u + S1.u >= 0x100000000ULL ? 1 : 0). // unsigned overflow/carry-out, S_ADDC_U32 
+ SCC = (S0.u[31] != S1.u[31] && S0.u[31] != D.u[31]). // signed overflow. @text 
+ SCC = (S0.u[31] == S1.u[31] && S0.u[31] != D.u[31]). // signed overflow. @text 
+ SCC = (S1.u > S0.u ? 1 : 0). // unsigned overflow or carry-out for S_SUBB_U32. 
+ SCC = (tmp[31] == SIMM16[15] && tmp[31] != D.i[31]). // signed overflow. 
+ SIMM16 = {size[4:0], offset[4:0], hwRegId[5:0]}; offset is 0..31, size is 1..32.
+ S_SET_GPR_IDX_ON, S_SET_GPR_IDX_OFF, S_SET_GPR_IDX_MODE and S_SET_GPR_IDX_IDX are related instructions. 
+ Since the waves deliver the count for the next barrier, this function can have a different size barrier for each occurrence.
+ Single precision division fixup. S0 = Quotient, S1 = Denominator, S2 = Numerator.
+ Single precision division pre-scale. S0 = Input to scale (either denominator or numerator), S1 = Denominator, S2 = Numerator.
+ This action will release ALL queued waves; it Will have no effect if no waves are present. 
+ This action will release count number of waves, immediately if queued, or as they arrive from the noted resource. 
+ This action will release one waved if any are queued in this resource. 
+ This opcode can be used to convert a quad mask into a pixel mask; given quad mask in s0, the following sequence will produce a pixel mask in s1:
+ This opcode is not suitable for use with S_ADDC_U32 for implementing 64-bit operations. 
+ This opcode is not suitable for use with S_SUBB_U32 for implementing 64-bit operations. 
+ This opcode performs a standard Fused Multiply-Add operation and will conditionally scale the resulting exponent if VCC is set.
+ This opcode producses a VCC flag for post-scaling of the quotient (using V_DIV_FMAS_F32). 
+ This opcode producses a VCC flag for post-scaling of the quotient (using V_DIV_FMAS_F64). 
+ Use LDS direct to supply a single 32-bit value to all lanes. A single DWORD is read from LDS memory at ADDR[M0[15:0]], where M0[15:0] is a byte address and is dword-aligned. M0[18:16] specify the data type for the read and may be 0=UBYTE, 1=USHORT, 2=DWORD, 4=SBYTE, 5=SSHORT. Implies OPF_RDM0 when this operand is used. 
+ VOP2 version of V_FMA_F32 with 3rd src VGPR address is the vDst. 
+ for i in 0 ... opcode_size_in_bits - 1 do // Search from LSB
+ if S0[opcode_size_in_bits - 1 - i] != S0[opcode_size_in_bits - 1] then
+ is thread-unsafe and can't be specified. If you need to set this flag for testing, use the --console-allow-these-thread-unsafe-flags option.
+ result = (double) ((2/PI[1200:0] << shift) & 0x1fffff_ffffffff);
+ {PC, EXEC} = SGPR[CSP * 4]; // Read 128 bits from 4 consecutive SGPRs.
+!dbg attachment of global variable must be a DIGlobalVariableExpression
+" due to -Gec flag. This functionality is deprecated in newer language versions.
+# formal arguments must match # of arguments for function type!
+(root parameter [%u], visibility %s, descriptor table slot [%u])
+(root parameter[%u], visibility %s, descriptor table slot [%u])
+) - Precompiled shaders found but requested HwStage not present
+*E,BUILDP: sp3 has been compiled with inconsistent public/private release flags.
+*E,INTERR: internal error building opr table, opr '%s', case '%s', code 0x%x.
+*E,INTERR: internal error building opr table, opr '%s', case '%s', src_flags 0x%x.
+0 : enable parity error check in cache line. 1: disable parity error check in cache line.
+0.5ULP accuracy, out-of-range floating point values (including infinity) saturate. NaN is converted to 0. 
+0.5ULP accuracy, supports denormals, rounding, exception flags and saturation. 
+0.5ULP accuracy, supports input modifiers and creates FP16 denormals when appropriate. 
+0.5ULP accuracy, supports rounding, exception flags and saturation, denormals are supported. 
+0: Disable. 1: Enable priority arbitration to latency(miss) FIFO instead of default round-robin (use only if hit_bypass is defined).
+0: Disable. 1: Enable the UTC L1 to allocate gpuvm cachelines on  a 64k boundary instead of 4k.  Useful for clients that will always be working out of FB.
+0: Disable. 1: Force all requests to miss in UTCL1 L1 and make requests to UTCL2 (debug purpose).
+0: Disable. 1: Force requests to return in order (use only if hit_bypass is defined).
+0: Disable. 1: forces the page size on the L2 response to be 4k.  Note that if this is set, then the gpuvm_64k_default cannot be set.
+0: Disable. 1:Enable hit requests that have outstanding requests to the same cacheline in the latency(miss) FIFO to be pushed into latency(miss) FIFO instead of hit fifo (use only if hit_bypass is defined).
+0: Enable parity error check in cache line; 1: disable parity error check in cache line.
+0: If irritation enabled, corrupt all entries when writing, while irritator data (0+1) is Hi; 1: If irritation enabled, corrupt only the very next write after every Lo to Hi transition of irritator data (0+1)
+0: disable shootdown optimization in latency/hit FIFO. 1: enable shootdown optimization in latency/hit FIFO.
+0: normal operation. 1: force UTCL1 to return snoop=1 to client.
+0: only allow invalidate request from GPUVM invalidation interface when no requests are inflight. 1: allow invalidate request from GPUVM invalidation interface when there are still inflight requests.
+0: only invalidate the cacheline(s) if there are no outstanding requests; 1: always invalidate the cacheline(s).
+1. Compute the bounding box of the primitive (x_min, y_min) (upper left) and (x_max, y_max) (lower right), in pixels. 
+1ULP accuracy, out-of-range floating point values (including infinity) saturate. NaN is converted to 0. 
+1ULP accuracy, supports rounding, exception flags and saturation. FP16 denormals are accepted. Conversion is done with truncation. 
+2. Check for any extents that do not need to use the opcode --- if @code ((x_max/32 - x_min/32 >= 3) @text OR @code ((y_max/32 - y_min/32 >= 3) @text (tile size of 32) then all backends are covered. 
+2. Observe the bounding box is not large enough to trivially cover all backends. 
+3. Call the opcode with this 8 bit select: @code { x_min[6:5], y_min[6:5], x_max[6:5], y_max[6:5] } @text. 
+3. Divide by tile size 32 and concatenate bits to produce a selector of binary 00000001. 
+32-bit literal constant follows this instruction. 16-bit operands use only the 16 LSBs of this constant. 64-bit unsigned integer operands zero-extend the constant. 64-bit signed integer operands sign-extend the constant. 64-bit floating-point operands use the constant as the high 32 MSBs of a double-precision floating point value (1 sign bit, 11 exponent bits and 20 mantissa bits).
+4-bit signed int to 32-bit float. Used for interpolation in shader.
+4. Opcode will return 0x3 which means backend 0 and 1 are covered. 
+4. The opcode will return a 4 bit mask indicating which backends are covered, where bit 0 indicates SE0 is covered and bit 3 indicates SE3 is covered. 
+4SE version of LUT instruction for screen partitioning/filtering. This opcode is intended to accelerate screen partitioning in the 4SE case only. 2SE and 1SE cases use normal ALU instructions. 
+64-bit operations (I64, U64, DF64) cannot use DPP because of bank conflicts. 
+<assembly xmlns='urn:schemas-microsoft-com:asm.v1' manifestVersion='1.0'>
+@code D.u64[threadId] = !(S0 < S1) // With NAN inputs this is not the same operation as >=.
+@code D.u64[threadId] = !(S0 <= S1) // With NAN inputs this is not the same operation as >.
+@code D.u64[threadId] = !(S0 <> S1) // With NAN inputs this is not the same operation as ==.
+@code D.u64[threadId] = !(S0 == S1) // With NAN inputs this is not the same operation as !=.
+@code D.u64[threadId] = !(S0 > S1) // With NAN inputs this is not the same operation as <=.
+@code D.u64[threadId] = !(S0 >= S1) // With NAN inputs this is not the same operation as <.
+@code EXEC[threadId] = D.u64[threadId] = !(S0 < S1) // With NAN inputs this is not the same operation as >=.
+@code EXEC[threadId] = D.u64[threadId] = !(S0 <= S1) // With NAN inputs this is not the same operation as >.
+@code EXEC[threadId] = D.u64[threadId] = !(S0 <> S1) // With NAN inputs this is not the same operation as ==.
+@code EXEC[threadId] = D.u64[threadId] = !(S0 == S1) // With NAN inputs this is not the same operation as !=.
+@code EXEC[threadId] = D.u64[threadId] = !(S0 > S1) // With NAN inputs this is not the same operation as <=.
+@code EXEC[threadId] = D.u64[threadId] = !(S0 >= S1) // With NAN inputs this is not the same operation as <.
+@code EXEC[threadId] = D.u64[threadId] = (!isNan(S0) && !isNan(S1)).
+@code EXEC[threadId] = D.u64[threadId] = (isNan(S0)  ||  isNan(S1)).
+ABI alignment specification must be >0 for non-aggregate types
+ATC probe instruction. This instruction is used to prefetch an ATC translation and does not directly perform a memory operation.
+Access tag nodes must have the number of operands that is a multiple of 3!
+Add thread ID (0..63) to the index for address calc. mainly for scratch buffer.  Setting this to 1 also indicates that data_format will hold stride bits [17:14] used for scratch offset boundary checks instead of data_format
+Alias should have private, internal, linkonce, weak, linkonce_odr, weak_odr, or external linkage!
+All destinations are 'accumulate'-type operands -- they contribute to the input of the instruction as well. Note that SDWA with DST_PRESERVE can also create this effect on instructions that do not normally have 'accumulate'-style destinations.
+All llvm.experimental.deoptimize declarations must have the same calling convention
+Allocation instruction pointer not in the stack address space!
+Allow a wave to 'ping' all the other waves in its threadgroup to force them to wake up immediately from an S_SLEEP instruction. The ping is ignored if the waves are not sleeping. This allows for more efficient polling on a memory location. The waves which are polling can sit in a long S_SLEEP between memory reads, but the wave which writes the value can tell them all to wake up early now that the data is available. This is useful for fBarrier implementations (speedup). This method is also safe from races because if any wave misses the ping, everything still works fine (whoever missed it just completes their normal S_SLEEP). 
+Atomic instructions with CMPSWAP; marked because these need a different dmask value.
+Attribute 'byval' only applies to parameters with pointer type!
+Attribute 'swifterror' only applies to parameters with pointer to pointer type!
+Attribute 'swifterror' only applies to parameters with pointer type!
+Attributes 'byval' and 'inalloca' do not support unsized types!
+Attributes 'byval', 'inalloca', 'inreg', 'nest', and 'sret' are incompatible!
+Attributes 'byval', 'inalloca', 'nest', 'sret', 'nocapture', 'returned', 'swiftself', and 'swifterror' do not apply to return values!
+Attributes 'readnone and inaccessiblemem_or_argmemonly' are incompatible!
+Attributes 'readnone and inaccessiblememonly' are incompatible!
+Base 2 exponentiation. 0.51ULP accuracy, denormals are supported. 
+Base 2 exponentiation. 1ULP accuracy, denormals are flushed. 
+Base 2 logarithm. 0.51ULP accuracy, denormals are supported. 
+Bitfield extract with S0 = data, S1 = field_offset, S2 = field_width. 
+Bitfield modify. S0 is the bitfield width and S1 is the bitfield offset. 
+Bitfield reverse. Input and output modifiers not supported. 
+Bitwidth between the offsets and struct type entries must match
+Bitwise negation. Input and output modifiers not supported. 
+Block containg CatchPadInst must be jumped to only by its catchswitch.
+Block containing LandingPadInst must be jumped to only by the unwind edge of an invoke.
+Both operands to a binary operator are not of the same type!
+CAUTION: when in HALF_LDS mode, D must not be the same GPR as S; if D == S then data corruption will occur. 
+Cache Swizzle Array-Of-Structures according to stride, index_stride and element_size; else linear.
+Called function requires more parameters than were provided!
+Calling convention does not support varargs or perfect forwarding!
+Cannot invoke an intrinsic other than donothing, patchpoint, statepoint, coro_resume or coro_destroy
+Cannot represent opcode '%s' in any VOPC/VOP1/VOP2/VOP3 encoding.
+Cannot represent opcode in any VOPC/VOP1/VOP2/VOP3 encoding.
+Cannot use clamp and arbitrary destination with VOPC instruction '%s', even in SDWA mode.
+Cannot use dst_sel and arbitrary destination with VOPC instruction '%s', even in SDWA mode.
+Cannot use dst_unused and arbitrary destination with VOPC instruction '%s', even in SDWA mode.
+Cannot use omod with VOPC instruction '%s', even in SDWA mode.
+CatchPadInst needs to be directly nested in a CatchSwitchInst.
+CatchPadInst not the first non-PHI instruction in the block.
+CatchSwitchInst must unwind to an EH block which is not a landingpad.
+CatchSwitchInst needs to be in a function with a personality.
+CatchSwitchInst not the first non-PHI instruction in the block.
+Cause a wave to sleep for (64 * SIMM16[6:0] + 1..64) clocks. The exact amount of delay is approximate. Compare with S_NOP.
+CleanupPadInst needs to be in a function with a personality.
+CleanupPadInst not the first non-PHI instruction in the block.
+CleanupReturnInst must unwind to an EH block which is not a landingpad.
+Color (PS) or Parameter/position (VS) space has been allocated for this wave.  Exports stall until this is set.
+Conditional mask on each thread. In VOP3 the VCC source may be a scalar GPR specified in S2.u. 
+Constant buffer register b# must be defined for each RootConstants
+Control how gpuvm permission checks should be handled in the cache.  0: Permissions are handled similarly to the ATC. 1: Permissions are not checked to look for cache hit, only after translation returns.
+Control how gpuvm permission checks should be handled in the cache. 0: permissions are handled similarly to the ATC. 1: permissions are not checked to look for cache hit, only after translation returns;
+Convert floating point value S0 to 8-bit unsigned integer and pack the result into byte S1 of dword S2. 
+Copy one VGPR value to REGRD_TMP. D = SGPR-dest, S0 = Source Data (VGPR# or M0(lds-direct)), S1 = Lane Select (SGPR or M0). Ignores exec mask. 
+Copy one VGPR value to one SGPR. D = SGPR destination, S0 = source data (VGPR# or M0 for lds direct access), Lane# = FindFirst1fromLSB(exec) (Lane# = 0 if exec is zero). Ignores exec mask for the access. SQ translates to V_READLANE_B32. 
+Copy one VGPR value to one SGPR. D = SGPR-dest, S0 = Source Data (VGPR# or M0(lds-direct)), S1 = Lane Select (SGPR or M0). Ignores exec mask. 
+Copyright (C) 2010-2017 Advanced Micro Devices, Inc. All rights reserved.WARNING: This binary has not been compiled with PUBLIC_RELEASE.
+Counts how many bits in a row (from MSB to LSB) are the same as the sign bit. Returns -1 if all bits are the same. 
+Counts how many zeros before the first one starting from the MSB. Returns -1 if there are no ones. 
+D.f = 2.0 * cubemap major axis. XYZ coordinate is given in (S0.f, S1.f, S2.f).
+D.f = cubemap S coordinate. XYZ coordinate is given in (S0.f, S1.f, S2.f).
+D.f = cubemap T coordinate. XYZ coordinate is given in (S0.f, S1.f, S2.f).
+D.f = cubemap face ID ({0.0, 1.0, ..., 5.0}). XYZ coordinate is given in (S0.f, S1.f, S2.f).
+D.f[15:0] = S0.f * S1.f + S2.f.  Size and location of S0, S1 and S2 controlled by OPSEL.
+D.f[31:0] = S0.f * S1.f + S2.f.  Size and location of S0, S1 and S2 controlled by OPSEL.
+D.f[31:16] = S0.f * S1.f + S2.f.  Size and location of S0, S1 and S2 controlled by OPSEL.
+D.u = Masked Quad-Byte SAD with 16-bit packed accum_lo/hi(S0.u[63:0], S1.u[31:0], S2.u[63:0])
+D.u = Quad-Byte SAD with 16-bit packed accum_lo/hi(S0.u[63:0], S1.u[31:0], S2.u[63:0])
+D.u = hardware-reg. Read some or all of a hardware register into the LSBs of D.
+D.u128 = Masked Quad-Byte SAD with 32-bit accum_lo/hi(S0.u[63:0], S1.u[31:0], S2.u[127:0])
+D.u64[threadId] = !(S0 < S1) // With NAN inputs this is not the same operation as >=
+D.u64[threadId] = !(S0 <= S1) // With NAN inputs this is not the same operation as >
+D.u64[threadId] = !(S0 <> S1) // With NAN inputs this is not the same operation as ==
+D.u64[threadId] = !(S0 == S1) // With NAN inputs this is not the same operation as !=
+D.u64[threadId] = !(S0 > S1) // With NAN inputs this is not the same operation as <=
+D.u64[threadId] = !(S0 >= S1) // With NAN inputs this is not the same operation as <
+DATA_STATIC_WHILE_SET_AT_EXECUTE is fine to combine with DESCRIPTORS_VOLATILE, since DESCRIPTORS_VOLATILE still requires descriptors don't change during execution. 
+DCC: Set to 1 if the surface's component swap is not reversed which is all the time by default.
+DO NOT USE. enum for sh_sx bus only. Use GDS instruction for GDS ops. There are EXP_NUM_GDS outputs in total.
+DPFP (double precision floating point) instruction that should be disabled when dis_dpfp is set.
+DS instruction '%s' has unrecognized instruction field '%s'.
+DS instruction is only valid for GDS unit; the instruction is not valid for LDS.
+DS instruction takes one LDS address operand and generates a second LDS address value internally.
+DS instruction takes one LDS address operand and operates on one location in LDS memory.
+DS opcode is an ADDTID opcode; these opcodes have additional constraints, notably wait state hazards.
+DWARF address space only applies to pointer or reference types
+Data format (8, 16, 8_8, etc) in most circumstances. When ADD_TID_ENABLE == 1 and this resource is used in a scratch buffer operation (any MUBUF opcode except *_FORMAT_*), this field is instead used to specify an extended stride for scratch offset boundary checks -- this holds bits [17:14] of the stride and extends the range of stride to [0, 262143].
+Decompress Failed: Input is not a complete xbsc compressed buffer.
+Decrement performance counter specified in SIMM16[3:0] by 1.
+Depth of 3d texture map.  Units are 'depth-1', so 0 = 1 slice, 1=2slices.
+Descriptor range flag values can only be 0 or flag enum values, found: '%s'
+Descriptor range flags cannot specify DESCRIPTORS_VOLATILE with the DATA_STATIC flag at the same time (descriptor range flags 
+Descriptor range flags cannot specify more than one DATA_* flag 
+Disable latency FIFO scan (Only use if $lfifo_use_llist=1, normal configuration doesn't use).
+Display list of available options (-help-list-hidden for more)
+Do nothing. Repeat NOP 1..16 times based on SIMM16[3:0] -- 0x0 = 1 time, 0xf = 16 times. This instruction may be used to introduce wait states to resolve hazards; see the shader programming guide for details. Compare with S_SLEEP.
+EXEC = VCC = IEEE numeric class function specified in S1.u, performed on S0.d 
+EXEC = VCC = IEEE numeric class function specified in S1.u, performed on S0.f 
+EXEC = VCC = IEEE numeric class function specified in S1.u, performed on S0.f16 
+Each bit corresponds to the MTYPE Override  value for a particular VMID, this register should be shadowed in each client. Ie. Bit 5 set to 1 means VMID 5 has MTYPE overriding enabled set to 1.
+Enable hit requests that have outstanding requests to the same cacheline in the latency (miss) FIFO to be pushed into latency (miss) FIFO instead of hit fifo. Not Applicable.
+Enable missed optimization remarks from passes whose name match the given regular expression
+Enable optimization analysis remarks from passes whose name match the given regular expression
+Enable optimization remarks from passes whose name match the given regular expression
+Enable priority arbitration to latency (miss) FIFO instead of default round-robin. Not Applicable.
+End of program; signal that a wave has been saved by the context-switch trap handler and terminate wavefront. The hardware implicitly executes S_WAITCNT 0 before executing this instruction. See S_ENDPGM for additional variants.
+End of program; signal that a wave has exited its POPS critical section and terminate wavefront. The hardware implicitly executes S_WAITCNT 0 before executing this instruction. This instruction is an optimization that combines S_SENDMSG(MSG_ORDERED_PS_DONE) and S_ENDPGM; there may be cases where you still need to send the message separately, in which case you can end the shader with a normal S_ENDPGM instruction. See S_ENDPGM for additional variants.
+End of program; terminate wavefront. The hardware implicitly executes S_WAITCNT 0 before executing this instruction. See S_ENDPGM_SAVED for the context-switch version of this instruction and S_ENDPGM_ORDERED_PS_DONE for the POPS critical region version of this instruction.
+Expected a register token (CBV, SRV, UAV, Sampler), found: '%s'
+Explicit call type does not match pointee type of callee operand
+Explicit gep operator type does not match pointee type of pointer operand
+Explicit gep type does not match pointee type of pointer operand
+Explicit invoke type does not match pointee type of callee operand
+Explicit load/store type does not match pointee type of pointer operand
+FLAT instruction '%s' has unrecognized instruction field '%s'.
+FLAT instruction '%s' must set 'null' for either the vector or scalar address or both.
+Failed to init xbsc chicken bits. Chicken bit files will be ignored.
+Fast-math-flags specified for call without floating-point scalar or vector return type
+Final computation. attr_word selects LDS high or low 16bits. Used for both 16- and 32-bank LDS. 
+Final computation. attr_word selects LDS high or low 16bits. Used for both 16- and 32-bank LDS. Result is always written to the 16 LSBs of the destination VGPR. 
+First flag for replay, allow write to this field only under privilage mode
+First interpolation attribute. Increment from here for additional attributes. There are SQ_NUM_ATTR attributes in total.
+Flag indicating a complete buffer has been written.  In wrap mode, this means the pointer has wrapped since SQ_THREAD_TRACE_BUFFER_BASE was last written.  Writing SQ_THREAD_TRACE_BUFFER_BASE or writing SQ_THREAD_TRACE_CTRL.RESET_BUFFER will clear this bit.
+Flag indicating that events have been logged and are being written to memory.  The BASE and SIZE registers should not be changed while this bit is set (or while there are any events in the pipe that could be logged).
+Floating-point arithmetic operators must have same type for operands and result!
+Floating-point arithmetic operators only work with floating-point types!
+For DATA_FORMATs that support NUM_FORMAT=sRGB, disables the conversion from sRGB to Linear Space
+For instruction '%s', computed acnt of %d exceeds maximum allowed acnt of %d.
+Force UTCL1 to cache 64K page size when UTCL2 return fragment size is 2M.
+Force all requests to miss in UTCL1 L1 and make requests to L2.
+Force disable the lazy-loading on-demand of metadata when loading bitcode for importing.
+Forces a read over a register, even if CU is idle.  Clocks should be enabled before doing forced reads.
+Found return instr that returns non-void in Function of void return type!
+Funclet bundle operands should correspond to a FuncletPadInst
+Function return type does not match operand type of return inst!
+Fused double precision multiply add. 0.5ULP precision, denormals are supported. 
+Fused half precision multiply add. 0.5ULP accuracy, denormals are supported. 
+Fused single precision multiply add. 0.5ULP accuracy, denormals are supported. 
+GDS-only. Add (count_bits(exec_mask)) to one of 4 dedicated ordered-count counters (aka 'packers'). Additional bits of instr.offset field are overloaded to hold packer-id, 'last'.
+Generation of the INEXACT exception is controlled by the CLAMP bit. INEXACT exceptions are enabled for this conversion iff CLAMP == 1. 
+Global is external, but doesn't have external or weak linkage!
+Global variable initializer type does not match global variable type!
+GlobalValue with private or internal linkage must be dso_local!
+IEEE compliant. Supports denormals, round mode, exception flags, saturation. 
+If op_sel[3] is 0 Result is written to 16 LSBs of destination VGPR and hi 16 bits are preserved. 
+If op_sel[3] is 0 Result is written to 16 LSBs of destination VGPR and hi 16 bits are written as 0 (this is different from V_MAD_F16). 
+If op_sel[3] is 0 Result is written to 16 LSBs of destination VGPR and hi 16 bits are written as 0 (this is different from V_MAD_I16). 
+If op_sel[3] is 0 Result is written to 16 LSBs of destination VGPR and hi 16 bits are written as 0 (this is different from V_MAD_U16). 
+If op_sel[3] is 1 Result is written to 16 MSBs of destination VGPR and lo 16 bits are preserved. 
+If set, an overflowed FP16 result will be clamped to +/- MAX_FP16 regardless of round mode, while still preserving true INF values.
+If the wave executing S_WAKEUP is in a threadgroup (in_tg set), then it will wake up all waves associated with the same threadgroup ID. Otherwise, S_WAKEUP is treated as an S_NOP.
+Image memory load with format conversion specified in T#. No sampler.
+Image memory load with user-supplied mip level, no format conversion and with sign extension. No sampler.
+Image memory load with user-supplied mip level, no format conversion. No sampler.
+Image memory load with with no format conversion and sign extension. No sampler.
+Image memory store of packed data without format conversion . No sampler.
+Image memory store of packed data without format conversion to user-supplied mip level. No sampler.
+Image memory store with format conversion specified in T# to user specified mip level. No sampler.
+Image memory store with format conversion specified in T#. No sampler.
+Image sample instruction includes LOD data in the image address.
+Image sample instruction includes bias in the image address.
+Image sample instruction includes clamp data in the image address.
+Image sample instruction includes depth compare data in the image address.
+Image sample instruction includes derivative data in the image address.
+Image sample instruction includes offset data in the image address.
+Image sample instruction is a GATHER*H operation (gather-horizontal) with additional restrictions on how it may be used.
+Image sample instruction is a GATHER4 operation with additional restrictions on how it may be used.
+Image sample instruction is a GATHER8 operation with additional restrictions on how it may be used.
+Image sample instruction takes a user-supplied miplevel ID instead of computing it based on LOD.
+Image sample instruction uses a MIPID, LOD or CLAMP in the image address. Internally, ACNT needs to be incremented by 1 for this operation.
+Immutability part of the struct tag metadata must be either 0 or 1
+In VOP3 the VCC destination may be an arbitrary SGPR-pair, and the VCC source comes from the SGPR-pair at S2.u. 
+In VOP3 the VCC destination may be an arbitrary SGPR-pair, and the VCC source comes from the SGPR-pair at S2.u. SQ translates to V_SUBB_CO_U32. SQ translates this to V_SUBREV_U32 with reversed operands. 
+In VOP3 the VCC destination may be an arbitrary SGPR-pair. SQ translates this to V_SUB_CO_U32 with reversed operands. 
+In sp3 you may use builtin functions vmcnt(n), expcnt(n) and lgkmcnt(n) to compose values for this instruction. They may be used in isolation or bitwise-AND'd together to compose the SIMM16 operand. If some functions are omitted, their fields will default to the maximum value. 
+In sp3 you may use the builtin function hwreg(reg, offset, size) to generate the simm16 operand.
+In sp3 you may use the builtin function sendmsg(msg, gsop, streamid) to compose values for this instruction. 
+Incompatible argument and return types for 'returned' attribute
+Inconvertible error value. An error has occurred that could not be converted to a known std::error_code. Please file a bug.
+Incorrect number of operands for '%s':  expected %d (%d dst + %d src), got %d.
+Incorrect register type '%s' in Sampler/StaticSampler (expected s#)
+Incorrect usage of an input modifier with a non-inlinable constant.
+Increment performance counter specified in SIMM16[3:0] by 1.
+Index Stride: 8,16,32 or 64. used for swizzled buffer addressing
+Indicates a thread trace buffer has encountered an UTC error.
+Indicates if anisotropic filtering is allowed when the resource view contains one level. 0=Allow 1=Disallow, HW overrides to isotropic equivalent (AnisoPoint->Point, AnisoLinear->Linear)
+Indicates if instruction or ECC generated interrupts may be pending.
+Indicates that we should do reads/writes from the unindexed address space (GFXDEC,SQDEC,SQCONDEC).  Unimplemented.
+Input and output modifiers not supported; this is an untyped operation.
+Input and output modifiers not supported; this is an untyped operation. 
+Input and output modifiers not supported; this is an untyped operation. SQ translates to V_MOV_B32.
+Instead, it consumes any positional arguments until the next recognized option.
+Instruction '%s' cannot use modifier 'gds' when the shader is ACV.
+Instruction '%s' data format modifier may not be specified directly in the instruction.
+Instruction '%s' does not appear to have a valid operand definition, native encoding '%s', this encoding '%s'.
+Instruction '%s' format modifier requires an list for data/number formats.
+Instruction '%s' in VOP3 encoding cannot accept absolute value modifiers.
+Instruction '%s' modifier '%s' not allowed for instructions in the SDST encoding.
+Instruction '%s' must have same operands for paired compr exports.
+Instruction '%s' number format modifier may not be specified directly in the instruction.
+Instruction '%s' sets %saddr64, %sidxen, %soffen; this combination is illegal.
+Instruction '%s' takes between 1 and 5 operands; saw %d operands.
+Instruction '%s' uses multiple scalar broadcast constants; at most 1 distinct broadcast constant is allowed becuase instruction has flag OPF_SCALAR_BCAST_ONE.
+Instruction '%s' uses multiple scalar broadcast constants; at most 1 distinct broadcast constant is allowed.
+Instruction '%s' uses multiple scalar broadcast constants; at most 2 distinct broadcast constants are allowed.
+Instruction can branch to a program label verifiable at compile time (compare OPF_WRPC).
+Instruction implicitly reads EXEC (this does not include VOPs where EXEC is used solely to determine which threads are executing).
+Instruction implicitly reads PC (not including for the fetch of this instruction).
+Instruction implicitly reads VCC. The instruction always reads VCC; this flag should not be used for carry-in cases where a different SGPR pair may be named depending on instruction encoding. Compare OPF_VCCS.
+Instruction implicitly writes PC to an arbitrary register-based value, often an indirect jump (compare SEN_LABEL).
+Instruction is an interpolation opcode; when used in VOP3 encoding, src0 and src1 must be swapped.
+Instruction is for internal use only, and should never appear in shader text.
+Instruction performs an atomic operation on memory. This flag is mutually exclusive with OPF_MEM_STORE.
+Instruction referencing instruction not embedded in a basic block!
+Instruction stores data from LDS into memory. This flag is mutually exclusive with OPF_MEM_ATOMIC and OPF_MEM_STORE.
+Instruction stores data into memory. This flag is mutually exclusive with OPF_MEM_ATOMIC.
+Instruction unconditionally moves data from a source to a destination. Useful for dataflow analysis.
+Integer arithmetic operators must have same type for operands and result!
+Integer constant '0x%08x' exceeds 16-bit range of operand (checked both signed and unsigned range).
+Integer constant '0x%08x' exceeds 21-bit range of operand (checked both signed and unsigned range).
+Integer constant '0x%08x' exceeds 6-bit range of operand (checked both signed and unsigned range).
+Integer constant '0x%08x' exceeds 8-bit range of operand (checked both signed and unsigned range).
+Internal error while dispatching %s: requested ASIC %s, backend %d, function not implemented for this backend
+Internal error while dispatching %s: requested ASIC %s, backend %d, limit is %d
+Internal error, unrecognized operand type %d in assembly path.
+Internal error, unrecognized operand type %s (%d) in assembly path.
+Intrinsic name not mangled correctly for type arguments! Should be: 
+Introduce EDC double error upon write to dest vgpr without causing an exception. 
+Invalid TYPE table: Only named structs can be forward referenced
+LDS & GDS. Add (count_bits(exec_mask)) to the value stored in DS memory at (M0.base + instr_offset). Return the pre-operation value to VGPRs.
+LDS & GDS. Subtract (count_bits(exec_mask)) from the value stored in DS memory at (M0.base + instr_offset). Return the pre-operation value to VGPRs.
+LandingPadInst needs at least one clause or to be a cleanup.
+LandingPadInst needs to be in a function with a personality.
+LandingPadInst not the first non-PHI instruction in the block.
+Leading all-spaces line must be smaller than the block indent
+Logical operators must have same type for operands and result!
+Look Up 2/PI (S0.d) with segment select S1.u[4:0]. This operation returns an aligned, double precision segment of 2/PI needed to do range reduction on S0.d (double-precision value). Multiple segments can be specified through S1.u[4:0]. Rounding is always round-to-zero. Large inputs (exp > 1968) are scaled to avoid loss of precision through denormalization. 
+M*BUF instruction uses a data format (for MTBUF, we use the dfmt field in the instruction; for MUBUF, we use the dfmt field in the resource).
+MIMG Instruction '%s' modifier '%s' specifies invalid value %d.
+MIMG instruction '%s' has unrecognized instruction field '%s'.
+MTBUF instruction '%s' has unrecognized instruction field '%s'.
+MUBUF instruction '%s' has unrecognized instruction field '%s'.
+Malformed struct tag metadata: base and access-type should be non-null and point to Metadata nodes
+Masked bit count, ThreadPosition is the position of this thread in the wavefront (in 0..63). See also V_MBCNT_HI_U32_B32. 
+Masked bit count, ThreadPosition is the position of this thread in the wavefront (in 0..63). See also V_MBCNT_LO_U32_B32. 
+Minimum time granularity (in microseconds) traced by time profiler
+Missing alignment specification for pointer in datalayout string
+Must explicitly set the number of regular VGPRs using vgpr_count() when referencing shared VGPRs.
+NOTE: In textual representations the I/J VGPR is the first source and the attribute is the second source; however in the VOP3 encoding the attribute is stored in the src0 field and the VGPR is stored in the src1 field. 
+NOTE: The number of S_NOPs required depends on the size of the shader instruction buffer, which in current generations is 16 DWORDs long. Older architectures had a 12 DWORD instruction buffer and in those architectures, 12 S_NOP instructions were sufficient.
+New buffer has been provided to be used when current buffer fills.
+No carryin/carryout and no saturation. This opcode exists to accelerate the SHA256 hash algorithm. 
+Number of 64-cycles to wait before retrying an xnacked request.
+Number of outstanding lds/gds/const-fetch/msg related instructions.
+Number of records in buffer. For scalar memory instructions this is in byte units iff STRIDE == 0. For vector memory instructions this is in byte units iff inst.IDXEN == 1. In all other cases this is in units of STRIDE. (Within the set of legal combinations, this is equivalent to: bytes for raw buffers, stride-units for structured buffers, ignored for private/scratch).
+Number of vector memory read/write instructions in-flight. Lower bits [3:0]
+Number of vector memory read/write instructions in-flight. Upper bits [5:4]
+Offset to add to any VINTRP opcodes when they need to use the VOP3 encoding. For example, SQ_V_INTRP_OFFSET + SQ_V_INTERP_P1_F32 generates the VOP3 version of interpolation.
+Offset to add to any VOP1 opcodes when they need to use the VOP3 encoding. For example, SQ_V_OP1_OFFSET + SQ_V_MOV_B32 generates the VOP3 version of MOV.
+Offset to add to any VOP2 opcodes when they need to use the VOP3 encoding. For example, SQ_V_OP2_OFFSET + SQ_V_ADD_F32 generates the VOP3 version of ADD.
+Offset to add to any VOPC opcodes when they need to use the VOP3 encoding. For example, SQ_V_OPC_OFFSET + SQ_V_CMP_EQ generates the VOP3 version of CMP_EQ.
+Old-style TBAA is no longer allowed, use struct-path TBAA instead
+Only print IR for functions whose name match this for all print-[before|after][-all] options
+Opaque-black, transparent-black, white or use border color pointer.
+Opcode '%s' is restricted to ACV core only, but shader type is one of the SH core types.
+Opcode '%s' is restricted to SH core only, but shader type is ACV.
+Opcode is an MBUF D16 formatted operation with one channel, i.e. _X.
+Opcode is an MBUF D16 formatted operation with three channels, i.e. _XYZ.
+Opcode is an MBUF formatted or a FLAT/SCRATCH/GLOBAL operation that asserts D16. The texture pipeline should return packed FP16 data instead of FP32 data.
+Operand %d (%s) of instruction '%s' cannot accept a negation modifier.
+Operand %d (%s) of instruction '%s' cannot accept a sign extend modifier.
+Operand %d (%s) of instruction '%s' cannot accept an absolute value modifier.
+Operand %d (%s) of instruction '%s' cannot accept an operand select modifier.
+Operand %d (%s) of instruction '%s' cannot be %s when the shader is ACV.
+Operand %d (%s) of instruction '%s' contains too many components.
+Operand %d (%s) of instruction '%s' does not have a valid channel.
+Operand %d (%s) of instruction '%s' exceeds the total number of SGPRs available (%d total SGPRs).
+Operand %d (%s) of instruction '%s' exceeds the total number of SVGPRs available (%d total SVGPRs).
+Operand %d (%s) of instruction '%s' exceeds the total number of VGPRs available (%d total VGPRs).
+Operand %d (%s) of instruction '%s' has components with inconsistent absolute value modifiers.
+Operand %d (%s) of instruction '%s' has components with inconsistent negation modifiers.
+Operand %d (%s) of instruction '%s' has components with inconsistent operand select modifiers.
+Operand %d (%s) of instruction '%s' has components with inconsistent sign extension modifiers.
+Operand %d (%s) of instruction '%s' has mismatched elements.
+Operand %d (%s) of instruction '%s' is a %s and cannot accept a swizzle.
+Operand %d (%s) of instruction '%s' is a %s and must be aligned to a multiple of %d.
+Operand %d (%s) of instruction '%s' is an out-of-bounds MRT target %d.
+Operand %d (%s) of instruction '%s' is an out-of-bounds NGG INDEX target %d.
+Operand %d (%s) of instruction '%s' is an out-of-bounds Z target %d.
+Operand %d (%s) of instruction '%s' is an out-of-bounds attribute %d.
+Operand %d (%s) of instruction '%s' is an out-of-bounds null target %d.
+Operand %d (%s) of instruction '%s' is an out-of-bounds parameter target %d.
+Operand %d (%s) of instruction '%s' is an out-of-bounds position target %d.
+Operand %d (%s) of instruction '%s' is not a member of type %s.
+Operand %d (%s) of instruction '%s' is not a parameter { p0, p10, p20 }.
+Operand %d (%s) of instruction '%s' is not aligned properly.
+Operand %d (%s) of instruction '%s' is the second distinct literal constant, however encoding %s can only accept one literal. Literals seen are 0x%08x and 0x%08x.
+Operand %d (%s) of instruction '%s' must specify %d %s address%s.
+Operand %d (%s) of instruction '%s' must specify %d consecutive %s address%s.
+Operand %d (%s) of instruction '%s' must specify 1 %s address. This operand is an M64 value and you are in wave32 mode, so you must specify a 32-bit operand.
+Operand %d (%s) of instruction '%s' not recognized as a special destination.
+Operand %d (%s) of instruction '%s' only available in GS and ES shaders.
+Operand %d (%s) of instruction '%s' only available in GS shaders.
+Operand %d (%s) of instruction '%s' only available in HS shaders.
+Operand %d (%s) of instruction '%s' only available in VS shaders.
+Operand %d (%s) of instruction '%s' requires SO base 0 be enabled.
+Operand %d (%s) of instruction '%s' requires SO base 1 be enabled.
+Operand %d (%s) of instruction '%s' requires SO base 2 be enabled.
+Operand %d (%s) of instruction '%s' requires SO base 3 be enabled.
+Operand %d (%s) of instruction '%s' requires SO or offchip LDS be enabled.
+Operand %d (%s) of instruction '%s' requires offchip LDS be enabled.
+Operand %d (%s) of instruction '%s' requires scratch be enabled.
+Operand %d (%s) of instruction '%s' requires threadgroup ID X be enabled.
+Operand %d (%s) of instruction '%s' requires threadgroup ID Y be enabled.
+Operand %d (%s) of instruction '%s' requires threadgroup ID Z be enabled.
+Operand %d (%s) of instruction '%s' requires threadgroup size be enabled.
+Operand %d (%s) of instruction '%s' requires wave count be enabled.
+Operand %d of instruction '%s' cannot accept a negation modifier.
+Operand %d of instruction '%s' cannot accept a sign extend modifier.
+Operand %d of instruction '%s' cannot accept an absolute value modifier.
+Operand %d of instruction '%s' cannot accept an sign extend modifier.
+Operand %d of instruction '%s' cannot be { exec_hi, exec_lo, m0 }.
+Operand %d of instruction '%s' cannot be { vcc_hi, vcc_lo }.
+Operand %d of instruction '%s' contains too many components.
+Operand %d of instruction '%s' does not have a valid channel.
+Operand %d of instruction '%s' exceeds the total number of SGPRs available (%d total SGPRs).
+Operand %d of instruction '%s' exceeds the total number of VGPRs available (%d total VGPRs).
+Operand %d of instruction '%s' has components with inconsistent absolute value modifiers.
+Operand %d of instruction '%s' has components with inconsistent negation modifiers.
+Operand %d of instruction '%s' has components with inconsistent sign extend modifiers.
+Operand %d of instruction '%s' is a %s and cannot accept a swizzle.
+Operand %d of instruction '%s' is a %s and must be aligned to a multiple of %d.
+Operand %d of instruction '%s' is an out-of-bounds MRT target %d.
+Operand %d of instruction '%s' is an out-of-bounds Z target %d.
+Operand %d of instruction '%s' is an out-of-bounds attribute %d.
+Operand %d of instruction '%s' is an out-of-bounds null target %d.
+Operand %d of instruction '%s' is an out-of-bounds parameter target %d.
+Operand %d of instruction '%s' is an out-of-bounds position target %d.
+Operand %d of instruction '%s' is not a parameter { p0, p10, p20 }.
+Operand %d of instruction '%s' is the second distinct literal constant, however this encoding can only accept one literal.
+Operand %d of instruction '%s' must be a number, a label or an instance.
+Operand %d of instruction '%s' must be specified as a literal constant, however this encoding cannot accommodate a literal.
+Operand %d of instruction '%s' must specify %d consecutive %s addresses.
+Operand %d of instruction '%s' only available in GS and ES shaders.
+Operand %d of instruction '%s' only available in GS shaders.
+Operand %d of instruction '%s' only available in HS shaders.
+Operand %d of instruction '%s' only available in VS shaders.
+Operand %d of instruction '%s' requires SO base 0 be enabled.
+Operand %d of instruction '%s' requires SO base 1 be enabled.
+Operand %d of instruction '%s' requires SO base 2 be enabled.
+Operand %d of instruction '%s' requires SO base 3 be enabled.
+Operand %d of instruction '%s' requires SO or offchip LDS be enabled.
+Operand %d of instruction '%s' requires offchip LDS be enabled.
+Operand %d of instruction '%s' requires threadgroup ID X be enabled.
+Operand %d of instruction '%s' requires threadgroup ID Y be enabled.
+Operand %d of instruction '%s' requires threadgroup ID Z be enabled.
+Operand %d of instruction '%s' requires threadgroup size be enabled.
+Operand %d of instruction '%s' requires wave count be enabled.
+Operations already using a 64-bit instruction (e.g. MADAK, MADMK) can never use DPP. 
+Output to colour MRT 0. Increment from here for additional MRTs. There are EXP_NUM_MRT MRTs in total.
+Output to parameter 0. Increment from here for additional parameters. There are EXP_NUM_PARAM parameters in total.
+Output to position 0. Increment from here for additional positions. There are EXP_NUM_POS positions in total.
+Overrides Error response types: 0x0 Error, 0x1 PRT, 0x2 success, 0x3 xnack.
+Overrides error response types. 0: Error, 1: PRT, 2: Success, 3: Xnack
+Overrides xnack(retry) response types. 0: Xnack, 1: PRT, 2: Error, 3: Success
+Overrides xnack(retry) response types: 0x0 Xnack, 0x1 PRT, 0x2 Error, 0x3
+PHI node has multiple entries for the same basic block with different incoming values!
+PHI nodes must have at least one entry.  If the block is dead, the PHI should be removed!
+PHINode should have one entry for each predecessor of its parent basic block!
+POPS counter (12b). Returns the ID of the most recent wave to complete in-order.
+Pack converted value of S0.f into byte S1 of the destination. SQ translates to V_CVT_PK_U8_F32. Note: this opcode uses src_c to pass destination in as a source. 
+Parameter interpolation (SQ translates to V_MAD_F32 for SP). 
+Parameter load. Used for custom interpolation in the shader. 
+Performance modulation (scales sampler's perf_z, perf_mip, aniso_bias lod_bias_sec)
+Pitch used for linear addressing, in units of 128B, e.g. a value of '8' means a 1024B pitch.  Only 13 bits are used, the most significant bit is unused.
+Preserve existing unused bits; caused a read-modify-write on the destination.
+Print inline line numbers and variable info while doing print-after and print-before
+Print the global id for each value when reading the module summary
+Random Number Generator Update Interval: The interval period = 4*2**(value).
+Random Number Generator. 13 bits, can be set to a seed value. [5:0] as wave priority randomizer. [12:6] as the enable value to compare with the RET.
+Random Wave Priority Enable Threshold. Disable rondom wave priority when value = 127.
+Read 1 dword from scalar data cache. If the offset is specified as an SGPR, the SGPR contains an UNSIGNED 64-byte offset, consistent with other scratch operations. If the offset is specified as an immediate 21-bit constant, the constant is a SIGNED BYTE offset.
+Read 1 dword from scalar data cache. If the offset is specified as an SGPR, the SGPR contains an UNSIGNED BYTE offset (the 2 LSBs are ignored). If the offset is specified as an immediate 21-bit constant, the constant is a SIGNED BYTE offset.
+Read 1 dword from scalar data cache. See S_LOAD_DWORD for details on the offset input.
+Read 16 dwords from scalar data cache. See S_LOAD_DWORD for details on the offset input.
+Read 2 dwords from scalar data cache. See S_LOAD_DWORD for details on the offset input.
+Read 2 dwords from scalar data cache. See S_SCRATCH_LOAD_DWORD for details on the offset input.
+Read 4 dwords from scalar data cache. See S_LOAD_DWORD for details on the offset input.
+Read 4 dwords from scalar data cache. See S_SCRATCH_LOAD_DWORD for details on the offset input.
+Read 8 dwords from scalar data cache. See S_LOAD_DWORD for details on the offset input.
+Reciprocal intended for integer division, can raise integer DIV_BY_ZERO exception but cannot raise floating-point exceptions. To be used in an integer reciprocal macro by the compiler with one of the following sequences:
+Reciprocal square root with IEEE rules and perhaps not the accuracy you were hoping for -- (2**29)ULP accuracy. On the upside, denormals are supported. 
+Reciprocal square root with IEEE rules. 0.51ULP accuracy, denormals are supported. 
+Reciprocal square root with IEEE rules. 1ULP accuracy, denormals are flushed. 
+Reciprocal with IEEE rules and 1ULP accuracy. Accuracy converges to < 0.5ULP when using the Newton-Raphson method and 2 FMA operations. Denormals are flushed. 
+Reciprocal with IEEE rules and perhaps not the accuracy you were hoping for -- (2**29)ULP accuracy. On the upside, denormals are supported. 
+Reduce cache line size by half  (debug/performance measure purpose).
+Reduce latency FIFO depth by half (debug/performance measure purpose).
+Referenced SGPR %d which exceeds explicit allocation of %d SGPRs.
+Referenced SVGPR %d which exceeds explicit allocation of %d SVGPRs.
+Referenced VGPR %d which exceeds explicit allocation of %d VGPRs.
+Register bit toggle from 0 to 1 to trigger invalidation to all UTCL1 cache lines or per vmid.
+Register bit toggle from 0 to 1 to trigger invalidation to all UTCL1 cache lines or per vmid. (Client register block  should reset it to 0 after write, read to this bit will always be 0, dynamic clock to utcl1 needs to run during this operation).
+Register index determines which register to read or write. This includes all registers in the SQ_IND address space. These registers are: SQ_DEBUG_STS_GLOBAL*, SQ_DEBUG_STS_LOCAL, SQ_DEBUG_CTRL_LOCAL, and SQ_WAVE_*. Indices 0x200-27f correspond to SGPRs, M0 (27c) and EXEC (27e, 27f). Indices 0x400-4ff correspond to VGPRs 0-255 of this wave for the thread (work item) specified in the THREAD_ID field of this register.
+Replay rewind cnti, allow write to this field only under privileage mode
+Resource MipLevels-1.  Describes the resource, as opposed to base_level and last_level, which describes the resouce view.  For MSAA, holds number of samples.
+Resource type: 1d, 2d, 3d, cube, 1d_array, 2d_array, 2d_msaa, 2d_msaa_array.
+Result range is in (-1.0,-0.5][0.5,1.0) in normal cases. Returns binary significand of double precision float input, such that S0.d = significand * (2 ** exponent). See also V_FREXP_EXP_I32_F64, which returns integer exponent. See the C library function frexp() for more information. 
+Result range is in (-1.0,-0.5][0.5,1.0) in normal cases. Returns binary significand of half precision float input, such that S0.f16 = significand * (2 ** exponent). See also V_FREXP_EXP_I16_F16, which returns integer exponent. See the C library function frexp() for more information. 
+Result range is in (-1.0,-0.5][0.5,1.0) in normal cases. Returns binary significand of single precision float input, such that S0.f = significand * (2 ** exponent). See also V_FREXP_EXP_I32_F32, which returns integer exponent. See the C library function frexp() for more information. 
+Return calculated LOD. Vdata gets 2 32bit integer values: { rawLOD, clampedLOD }.
+Return fractional portion of a number. 0.5ULP accuracy, denormals are accepted. 
+Returns exponent of half precision float input, such that S0.f16 = significand * (2 ** exponent). See also V_FREXP_MANT_F16, which returns the significand. See the C library function frexp() for more information. 
+Returns exponent of single precision float input, such that S0.d = significand * (2 ** exponent). See also V_FREXP_MANT_F64, which returns the significand. See the C library function frexp() for more information. 
+Returns exponent of single precision float input, such that S0.f = significand * (2 ** exponent). See also V_FREXP_MANT_F32, which returns the significand. See the C library function frexp() for more information. 
+Returns the bit position of the first one from the LSB, or -1 if there are no ones. 
+Root descriptor flag values can only be 0 or flag enum values, found: '%s'
+Root signature flag values can only be 0 or flag enum values, found: '%s'
+Runtime compilation required but is disabled by input options.
+SAMPLE_C, with LOD clamp specified in shader, with lod bias.
+SAMPLE_C, with LOD clamp specified in shader, with user derivatives (LOD per quad).
+SAMPLE_C, with LOD clamp specified in shader, with user derivatives.
+SAMPLE_C_O, with LOD clamp specified in shader, with lod bias.
+SAMPLE_C_O, with LOD clamp specified in shader, with user derivatives (LOD per quad).
+SAMPLE_C_O, with LOD clamp specified in shader, with user derivatives.
+SAMPLE_O, with LOD clamp specified in shader, with lod bias.
+SAMPLE_O, with LOD clamp specified in shader, with user derivatives (LOD per quad).
+SAMPLE_O, with LOD clamp specified in shader, with user derivatives.
+SIMM16[15:14] = vmcount (vector memory operations) upper bits [5:4],
+SIMM16[3:0] = vmcount (vector memory operations) lower bits [3:0], 
+SMEM instruction '%s' has unrecognized instruction field '%s'.
+SMEM instruction '%s' saw an offset modifier and a literal constant in the soffset field, cannot specify both.
+SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps
+SOP1 instruction '%s' has unrecognized instruction field '%s'.
+SOP2 instruction '%s' has unrecognized instruction field '%s'.
+SOPC instruction '%s' has unrecognized instruction field '%s'.
+SOPK instruction '%s' has unrecognized instruction field '%s'.
+SOPP instruction '%s' has unrecognized instruction field '%s'.
+SQ performs a translation on this vector opcode before sending it to SP.
+SRV or UAV root descriptors can only be Raw or Structured buffers.
+S_SET_GPR_IDX_ON, S_SET_GPR_IDX_OFF, S_SET_GPR_IDX_MODE and S_SET_GPR_IDX_IDX are related instructions. 
+Same as GATHER4H, but fetched elements are treated as a single component and packed into GPR(s).
+Same as Gather4, but fetches one component per texel, from a 4x1 group of texels.
+Scalar ALU operations with one destination and one 16-bit constant source.
+Scalar GPR 0. Increment from here for additional GPRs. There are NUM_SGPR SGPRs in total.
+Scalar memory operation uses a 128-bit resource buffer constant instead of a 64-bit address constant.
+Send a message and then HALT the wavefront; see S_SENDMSG for details.
+Send a message upstream to VGT or the interrupt handler. SIMM16[9:0] contains the message type and is documented in the shader programming guide.
+Set HALT bit to value of SIMM16[0]; 1 = halt, 0 = resume. The halt flag is ignored while PRIV == 1 (inside trap handlers) but the shader will halt immediately after the handler returns if HALT is still set at that time.
+Set KILL bit to value of SIMM16[0]. Used primarily for debugging kill wave host command behavior.
+Set when a THREAD_TRACE_FINISH event has been received.  One bit per pipe.  Cleared when SQ_THREAD_TRACE_CTRL.RESET_BUFFER is set or THREAD_TRACE_FINISH event completes the pipeline.  LSB = ME1, pipe 0.  MSB = GFX(ME0), max pipe.
+Set when a THREAD_TRACE_FINISH event has completed and all data has been written to the buffer.  One bit per pipe.  Cleared when SQ_THREAD_TRACE_CTRL.RESET_BUFFER is set or a new THREAD_TRACE_FINISH event is received.  LSB = ME1, pipe 0.  MSB = GFX(ME0), max pipe.
+Set when thread trace generates an interrupt do to thread trace finish.
+Set when wave lifetime is exceeded and generates an interrupt.
+Setting ASIC %s (actually %s on this build), but capability %s (%d) does not match internal database value (%d) -- contact sp3 developers and report this error
+Setting ASIC %s (actually %s on this build), this asic does not exist in the internal database. Contact sp3 developers and report this error. IF YOU ARE DEFINING A NEW PROJECT: Please edit sp3-asic.c YOURSELF to define the new project -- search for 'NEW_PROJECT' in the source code for places you need to edit. 
+Setting ASIC %s (was previously set to %s), this changes the backend after we have already started parsing the shader, not currently supported by sp3, sorry.
+Shader has root bindings but root signature uses a DENY flag 
+Signals an unconditional break in the instruction stream after this instruction. The shader either stops at this instruction or jumps elsewhere; it will NOT (in general) continue on to execute the next instruction in memory. Conditional branches must NOT have this flag set.
+Simliar to GATHER4H_PCK, but packs eight elements from a 8x1 group of texels.
+Sp3 internal error: sq_uc.arch is malformed, unable to find operand information for encoding 0x%x, subencoding 0x%x with specific flags.
+Special register used to hold LDS/GDS addresses, relative indices, and send-messsage values.
+Specifies channel ordering for border color data independent of T# dst_sel_*s. Internal xyzw channels will get the following border color channels as stored in memory: 0=xyzw, 1=xwyz, 2=wzyx, 3=wxyz, 4=zyxw, 5=yxwz.
+Square root with perhaps not the accuracy you were hoping for -- (2**29)ULP accuracy. On the upside, denormals are supported. 
+Store one DWORD from LDS memory to system memory without utilizing VGPRs.
+Stride, in bytes. [0..16383]. See DATA_FORMAT for a way to extend the range of stride.
+Sum of absolute differences with accumulation, overflow into upper bits is allowed. 
+Sum of absolute differences with accumulation, overflow is lost. 
+Supports denormals, round mode, exception flags, saturation. 0.5ULP precision, denormals are supported. 
+Supports denormals, round mode, exception flags, saturation. SQ translates to V_ADD_F16. 
+Supports round mode, exception flags, saturation. 1ULP accuracy, denormals are flushed. 
+Supports round mode, exception flags, saturation. SQ translates this to V_MAD_LEGACY_F16. 
+Supports saturation (unsigned 16-bit integer domain). SQ translates this to V_SUB_U16 with reversed operands. 
+Swap operands. Input and output modifiers not supported; this is an untyped operation. 
+Symbolic name "%s" is deprecated; refer to documentation for current names.
+Synchronize waves within a threadgroup. If not all waves of the threadgroup have been created yet, waits for entire group before proceeding. If some waves in the threadgroup have already terminated, this waits on only the surviving waves. Barriers are legal inside trap handlers.
+The function reports true if the floating point value is *any* of the numeric types selected in S1.u according to the following list: 
+The landingpad instruction should have a consistent result type inside a function.
+The primitive shader must perform the following operation before the opcode is called. 
+The resume instruction should have a consistent result type inside a function.
+The unwind destination does not have an exception handling instruction!
+This instruction can only be used in the VOP3 encoding, but it does not require all 3 source VGPR operands.
+This instruction is only available if ASIC has the EXP_LEGACY and LOG_LEGACY opcodes.
+This instruction is only available if ASIC support deep learning primitiaves.
+This instruction is only available if ASIC supports 96b and 128b DS_READ opcodes.
+This instruction is only available if ASIC supports EDC and has MOV_FED instructions.
+This instruction is provided for compatibility with older ASICs. New shader code should always use S_RFE_B64. The second argument is ignored. 
+This is the same as V_MOV_B32 except no VGPR is written to. Internally generated for certain multipass opcodes.
+This opcode cannot use the VOP3 encoding and cannot use input/output modifiers. SQ translates to V_MAD_F32. 
+This opcode cannot use the VOP3 encoding and cannot use input/output modifiers. Supports round mode, exception flags, saturation. SQ translates this to V_MAD_LEGACY_F16. 
+This opcode is intended for use with 16-bit compressed exports. See V_CVT_F16_F32 for a version that respects the current rounding mode. 
+This opcode returns a 4-bit bitmask indicating which SE backends are covered by a rectangle from (x_min, y_min) to (x_max, y_max). With 32-pixel tiles the SE for (x, y) is given by @code { x[5] ^ y[6], y[5] ^ x[6] } @text. Using this formula we can determine which SEs are covered by a larger rectangle. 
+This vector memory instruction is allowed to return data to LDS memory (instead of to VGPRs) by setting lds=1 in the microcode.
+Trap handler temps (privileged). Increment from here for additional TTMPs. There are NUM_TTMP TTMPs in total. {TTMP1,TTMP0} = PC_save{hi,lo}.
+Trying to materialize functions before seeing function blocks
+UTCL1 cache line valid status (read only). 0: no cache line is valid in UTCL1 1: at least 1 cache line is valid in UTCL1.
+UTCL1 cache line valid status. 0: no cache line is valid in UTCL1; 1: at least 1 cache line is valid in UTCL1.
+Unable to convert ES/GS to PRS because of missing shader stage.
+Unable to convert LS/SS to SS because of missing shader stage.
+Unable to merge NGG pipeline because of unsupported shader stage.
+Unexpected operand for this encoding, likely chose the wrong encoding.
+Unexpected token. Expected Key, Flow Entry, or Flow Mapping End.
+Unexpected trailing characters after mangling specifier in datalayout string
+Unknown function pointer alignment type in datalayout string
+Unmapped behaviour. 0 = NULL (return 0 / drop write), 1 = INVALID (results in error and trap)
+Unsigned 8-bit pixel average on packed unsigned bytes (linear interpolation). S2 acts as a round mode; if set, 0.5 rounds up, otherwise 0.5 truncates. 
+Untyped buffer load 1 dword with format conversion. D0[15:0] = {8'h0, MEM[ADDR]}.
+Untyped buffer load signed byte (sign extend to VGPR destination).
+Untyped buffer load signed short (sign extend to VGPR destination).
+Untyped buffer load unsigned byte (zero extend to VGPR destination).
+Untyped buffer load unsigned short (zero extend to VGPR destination).
+Unwind edges out of a catch must have the same unwind dest as the parent catchswitch
+Unwind edges out of a funclet pad must have the same unwind dest
+Use with REG_INV_TOGGLE 0: invalidate UTCL1 cache lines only matched with vmid; 1: invalidate all UTCL1 cache lines.
+Use with client for ATC invalidation requests. 0: invalidate UTCL1 cache lines only matched with vmid. 1: invalidate all UTCL1 cache lines.
+Use with utcl1_reg_inv_toggle. 0 : invalidate UTCL1 cache lines only matched with vmid. 1: invalidate all UTCL1 cache lines.
+Used for texture quilting. Number of horizontal slices quilt. Encoded as trunc(log2(# horizontal  slices)) + 1.
+User settable wave priority is set to SIMM16[1:0]. 0 = lowest, 3 = highest. The overall wave priority is {SPIPrio[1:0] + UserPrio[1:0], WaveAge[3:0]}.
+VCC = IEEE numeric class function specified in S1.u, performed on S0.d 
+VCC = IEEE numeric class function specified in S1.u, performed on S0.f 
+VCC = IEEE numeric class function specified in S1.u, performed on S0.f16. 
+VOFFSET instruction '%s' has unrecognized instruction field '%s'.
+VOP1 instruction '%s' has unrecognized instruction field '%s'.
+VOP2 instruction '%s' has unrecognized instruction field '%s'.
+VOP3 instruction '%s' has unrecognized instruction field '%s'.
+VOP3P instruction '%s' has unrecognized instruction field '%s'.
+VOPC instruction '%s' has unrecognized instruction field '%s'.
+Vector ALU comparison operations with two sources. Instructions in this encoding may be promoted to VOP3 unless otherwise noted. Note that vector compare instructions respect the EXEC mask for computing the result in each thread; if EXEC[threadId] is zero, then the comparison for that thread is not performed and the result of VCC[threadId] is always zero.
+Vector ALU interpolation. Instructions in this encoding may be promoted to VOP3 unless otherwise noted.
+Vector ALU operations requiring three sources or special modifiers; also some obscure opcodes. Almost all VOP1, VOP2, VOPC and VINTRP opcodes can be promoted to VOP3 to use input and output modifiers.
+Vector ALU operations requiring two or three sources and performing two 16 bit ops in one instruction
+Vector ALU operations with one destination and one source. Instructions in this encoding may be promoted to VOP3 unless otherwise noted.
+Vector ALU operations with one destination and two sources. Instructions in this encoding may be promoted to VOP3 unless otherwise noted.
+Vector GPR 0. Increment from here for additional GPRs. There are NUM_VGPR VGPRs in total.
+Vector GPR 0. Increment from here for additional GPRs. There are NUM_VGPR VGPRs in total. You may use the constant SQ_SRC_VGPR_BIT to set or clear the high order bit for vector GPRs in this operand.
+Vector instruction cannot be promoted to the VOP3 encoding; it must use the VOP2/VOP1/VOPC encoding.  As a consequence these instructions may not use the input modifiers -x, abs(x), nor may they use the output modifiers mul, div, clamp.
+Vector instruction has a scalar carry-in. Depending on the encoding, this carry-in may be implicitly read from VCC or may be explicitly read from an SGPR pair. Compare OPF_VCCD and OPF_RDVCC.
+Vector instruction has a scalar carry-out in addition to its normal vector output. Depending on the encoding, this carry-out may be implicitly written to VCC or may be explicitly written to an SGPR pair. Compare OPF_VCCS.
+Vector instruction implemented via a lookup table and polynomial expansion.
+Vector instruction supports the setting of some or all of the OP_SEL field for VOP3P.
+Vector instruction supports the setting of some or all of the OP_SEL field.
+Vector opcode has an implicit literal value and thus uses the SRC_LITERAL slot, though no operand position explicitly uses SRC_LITERAL.
+Wait for the counts of outstanding lds, vector-memory and export/vmem-write-data to be at or below the specified levels. 
+Wave priority value set by SPI.  Higher value = higher priority.
+Wave priority value set by shader.  Higher value = higher priority.  Default is 0.
+Wave32 (__CONSOLE_ENABLE_WAVE32=1) cannot be used with legacy GS (including VS as ES).
+When 0, the wave will never receive an XNACK from ATC or attempt to replay instructions
+When printing IR for print-[before|after]{-all} always print a module IR
+When set to 1 causes the UTCL1 to allocate gpuvm cachelines on a 64k boundary instead of 4k. Useful fo rclients that will always be working out of FB.
+When set to 1 forces the page size on the L2 response to be 4k. Note that if this is set, then the GPUVM_64K_DEFAULT cannot be set.
+When set to 1, performance counters are incremented for this wave.
+When set to 1, shader hardware skips all export instructions (treats them as NOPs) because this shader will never be allocated export buffer space. (used for old vs_no_alloc).
+Write 1 dword from scalar data cache. If the offset is specified as an SGPR, the SGPR contains an UNSIGNED 64-byte offset, consistent with other scratch operations. If the offset is specified as an immediate 21-bit constant, the constant is a SIGNED BYTE offset.
+Write 1 dword to scalar data cache. If the offset is specified as an SGPR, the SGPR contains an UNSIGNED BYTE offset (the 2 LSBs are ignored). If the offset is specified as an immediate 21-bit constant, the constant is an SIGNED BYTE offset.
+Write 1 dword to scalar data cache. See S_STORE_DWORD for details on the offset input.
+Write 2 dwords from scalar data cache. See S_SCRATCH_STORE_DWORD for details on the offset input.
+Write 2 dwords to scalar data cache. See S_STORE_DWORD for details on the offset input.
+Write 4 dwords from scalar data cache. See S_SCRATCH_STORE_DWORD for details on the offset input.
+Write 4 dwords to scalar data cache. See S_STORE_DWORD for details on the offset input.
+Write all of the IMM32 into one VGPR in one lane. D = VGPR-dest, S0 = Lane Select (inline constant). Ignores exec mask. Ignores wave's exception state in SIMD (SP). 
+Write back and invalidate the shader L1 only for lines that are marked volatile. Always returns ACK to shader.
+Write back and invalidate the shader L1. Always returns ACK to shader.
+Write back dirty data in the scalar data cache volatile lines.
+Write some or all of the LSBs of IMM32 into a hardware register; this instruction requires a 32-bit literal constant.
+Write value into one VGPR in one lane. D = VGPR-dest, S0 = Source Data (sgpr, m0, exec or constants), S1 = Lane Select (SGPR or M0). Ignores exec mask. 
+Write-exchange 2 separate dwords with a stride of 64 dwords.
+You must have 16 separate S_NOP instructions or a jump/branch instruction after this instruction to make sure the SQ instruction buffer is purged. 
+[Testing only] List of thread-unsafe flags we're expecting to set.
+`LL' stands for `two LDS arguments'. attr_word selects the high or low half 16 bits of each LDS dword accessed. This opcode is available for 32-bank LDS only. 
+`LV' stands for `One LDS and one VGPR argument'. S2 holds two parameters, attr_word selects the high or low word of the VGPR for this calculation, as well as the high or low half of the LDS data. Meant for use with 16-bank LDS. 
+align applies only to load instructions, use attributes for calls or invokes
+alignment of arg 0 of memory intrinsic must be 0 or a power of 2
+alignment of arg 1 of memory intrinsic must be 0 or a power of 2
+all indices passed to llvm.localrecover must be less than the number of arguments passed to llvm.localescape in the parent function
+aniso bias, also used in aniso tap vhen available: unsigned 1.5
+application is running in wave-%d mode but shader requires wave-%d mode
+atomic load operand must have integer, pointer, or floating point type!
+atomic store operand must have integer, pointer, or floating point type!
+builder: embedded dxil bitcode pointer does not match header
+calls to experimental_deoptimize must be followed by a return
+calls to experimental_deoptimize must be followed by a return of the value computed by experimental_deoptimize
+cannot guarantee tail call due to mismatched ABI impacting function attributes
+cannot guarantee tail call due to mismatched parameter counts
+cannot guarantee tail call due to mismatched parameter types
+cl::alias must not have cl::sub(), aliased option's cl::sub() will be used!
+class llvm::StringRef __cdecl llvm::getTypeName<class llvm::TimePassesHandler>(void)
+clauses of different types (cf/alu/fetch) can't call each other
+cmpxchg instructions failure argument shall be no stronger than the success argument
+compatibility mode, typically for Crossfire scenarios: 0=previous (legacy), 1=current (new) generation behavior
+constant length must be a multiple of the element size in the element-wise atomic memory intrinsic
+dereferenceable, dereferenceable_or_null apply only to load instructions, use attributes for calls or invokes
+dereferenceable, dereferenceable_or_null apply only to pointer types
+dereferenceable, dereferenceable_or_null metadata value must be an i64!
+element size of the element-wise atomic memory intrinsic must be a power of 2
+error - option can never match, because another positional argument will match an unbounded number of values, and this option does not require a value!
+error - this positional option will never be matched, because it does not Require a value, and a cl::ConsumeAfter option is active!
+experimental_deoptimize must have exactly one "deopt" operand bundle
+experimental_deoptimize return type must match caller return type
+experimental_guard must have exactly one "deopt" operand bundle
+fence instructions may only have acquire, release, acq_rel, or seq_cst ordering.
+first operand of [us][add|sub]_sat must be an int type or vector of ints
+first operand of [us]mul_fix must be an int type or vector of ints
+first operand should be 'function_entry_count' or 'synthetic_function_entry_count'
+fpext source and destination must both be a vector or neither
+fptrunc source and destination must both be a vector or neither
+gather 4 single component elements (2x2) at level 0, with PCF.
+gather 4 single component elements (2x2) with user LOD and PCF.
+gather 4 single component elements (2x2) with user LOD clamp and PCF.
+gather 4 single component elements (2x2) with user LOD clamp.
+gather 4 single component elements (2x2) with user bias and PCF.
+gather 4 single component elements (2x2) with user bias and clamp.
+gather 4 single component elements (2x2) with user bias, clamp and PCF.
+gc.relocate: relocating a pointer shouldn't change its address space
+gc.relocate: statepoint base index doesn't fall within the 'gc parameters' section of the statepoint call
+gc.relocate: statepoint derived index doesn't fall within the 'gc parameters' section of the statepoint call
+gc.relocate: vector relocates to vector and pointer to pointer
+gc.result or gc.relocate are the only value uses of a gc.statepoint
+gc.statement: number of call arguments must be constant integer
+gc.statepoint call argument does not match wrapped function type
+gc.statepoint doesn't support wrapping non-void vararg functions yet
+gc.statepoint must read and write all memory to preserve reordering restrictions required by safepoint semantics
+gc.statepoint number of arguments to underlying call must be positive
+gc.statepoint number of deoptimization arguments must be constant integer
+gc.statepoint number of deoptimization arguments must be positive
+gc.statepoint number of transition arguments must be constant integer
+gc.statepoint number of transition arguments must be positive
+gc.statepoint: number of deoptimization arguments must be a constant integer
+gc.statepoint: number of transition arguments must be a constant integer
+hardware-reg = S0.u. Write some or all of the LSBs of D into a hardware register.
+hwreg() cannot be applied to the type of the second argument
+info argument of llvm.coro.begin must refer to an initialized constant
+info argument of llvm.coro.begin must refer to either a struct or an array
+inlinable function call in a function with debug info must have a !dbg location
+invalid ID operand in module flag (expected metadata string)
+invalid behavior operand in module flag (expected constant integer)
+invalid behavior operand in module flag (unexpected constant)
+invalid requirement on flag, flag does not have the required value
+invalid value for 'append'-type module flag (expected a metadata node)
+invalid value for 'max' module flag (expected constant integer)
+invalid value for 'require' module flag (expected metadata pair)
+invalid value for 'require' module flag (first value operand should be a string)
+invalid value for llvm.commandline metadata entry operand(the operand should be a string)
+invalid value for llvm.ident metadata entry operand(the operand should be a string)
+llvm.gcroot parameter #1 must either be a pointer alloca, or argument #2 must be a non-null constant.
+llvm.init_trampoline parameter #2 must resolve to a function.
+llvm.localrecover first argument must be function defined in this module
+module flag identifiers must be unique (or of 'require' type)
+multi-valued option specified with ValueDisallowed modifier!
+nonnull applies only to load instructions, use attributes for calls or invokes
+operand of mod '%s' has to be an %d-bit signed or unsigned integer
+return resource info for a given mip level specified in the address vgpr. No sampler. Returns 4 integer values into VGPRs 3-0: {num_mip_levels, depth, height, width}.
+s_waitcnt vmcnt(0) & expcnt(0) // Wait for VM and export counters to reach zero.
+sample texture map, with LOD clamp specified in shader, with lod bias.
+sample texture map, with LOD clamp specified in shader, with user derivatives (LOD per quad).
+sample texture map, with LOD clamp specified in shader, with user derivatives.
+second operand of [us][add|sub]_sat must be an int type or vector of ints
+second operand of [us]mul_fix must be an int type or vector of ints
+sendmsg() cannot be applied to the type of the first argument
+sendmsg() cannot be applied to the type of the second argument
+sendmsg() cannot be applied to the type of the third argument
+sext source and destination must both be a vector or neither
+shader type (PS/VS/ES/GS/FS) not selected, generation failed
+shared VGPR allocation %d and basic VGPR allocation %d exceeds limit
+swifterror value can only be loaded and stored from, or as a swifterror argument!
+swifterror value should be the second operand when used by stores
+swifterror value when used in a callsite should be marked with swifterror attribute
+the scale of smul_fix must be less than the width of the operands
+the scale of umul_fix must be less than or equal to the width of the operands
+this shader requests shared VGPRs but the basic VGPR count %d was not properly aligned, microcode was generated incorrectly as a result.
+tried to set sgpr_count more than once, previous setting was %d, current setting is %d
+tried to set svgpr_count more than once, previous setting was %d, current setting is %d
+tried to set vgpr_count more than once, previous setting was %d, current setting is %d
+trunc source and destination must both be a vector or neither
+v_fma_mix class of instructions cannot take abs_hi as a modifier
+v_fma_mix class of instructions cannot take neg_hi as a modifier
+vector function call has to return exactly one element per instance
+vector function call has to return the same type in each instance
+vector select requires selected vectors to have the same vector length as select condition
+zext source and destination must both be a vector or neither
