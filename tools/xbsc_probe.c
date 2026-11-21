@@ -60,20 +60,23 @@ static void report(const char* tag, void* h,
 }
 
 int wmain(int argc, wchar_t** argv) {
-    if (argc < 4) { fputs("usage: xbsc_probe.exe <xbsc_xs.dll> <blob> <probe-id>\n", stderr); return 2; }
+    if (argc < 4) { fputs("usage: xbsc_probe.exe <xbsc_xs.dll> <blob|manifest> <probe-id|batch>\n", stderr); return 2; }
     int probe = _wtoi(argv[3]);
+    int batch = (wcscmp(argv[3], L"batch") == 0);
     g_size = 0;
 
-    if (wcscmp(argv[2], L"-") != 0) {
-        FILE* f = _wfopen(argv[2], L"rb");
-        if (!f) { fputs("blob open failed\n", stderr); return 2; }
-        fseek(f, 0, SEEK_END); long n = ftell(f); fseek(f, 0, SEEK_SET);
-        g_code = (unsigned char*)calloc(1, (size_t)n + 4096);   // zero guard
-        if (fread(g_code, 1, (size_t)n, f) != (size_t)n) { fputs("blob read failed\n", stderr); return 2; }
-        fclose(f);
-        g_size = (u64)n;
-    } else {
-        g_code = (unsigned char*)calloc(1, 4096);
+    if (!batch) {
+        if (wcscmp(argv[2], L"-") != 0) {
+            FILE* f = _wfopen(argv[2], L"rb");
+            if (!f) { fputs("blob open failed\n", stderr); return 2; }
+            fseek(f, 0, SEEK_END); long n = ftell(f); fseek(f, 0, SEEK_SET);
+            g_code = (unsigned char*)calloc(1, (size_t)n + 4096);   // zero guard
+            if (fread(g_code, 1, (size_t)n, f) != (size_t)n) { fputs("blob read failed\n", stderr); return 2; }
+            fclose(f);
+            g_size = (u64)n;
+        } else {
+            g_code = (unsigned char*)calloc(1, 4096);
+        }
     }
 
     // make the DLL's own directory searchable for its siblings
@@ -98,6 +101,46 @@ int wmain(int argc, wchar_t** argv) {
         return 3;
     }
     printf("blob_size=%llu probe=%d\n", (unsigned long long)g_size, probe);
+
+    // Batch mode: one DLL load, one record per manifest line. Records are
+    // delimited so a consumer can parse them and so a crash names the file that
+    // was in flight (stdout is flushed after every record).
+    //   xbsc_probe.exe <dll> <manifest.txt> batch
+    if (batch) {
+        FILE* mf = _wfopen(argv[2], L"r");
+        if (!mf) { fputs("manifest open failed\n", stderr); return 2; }
+        size_t cap = 1u << 23;                    // 8 MB is far above the largest stream
+        unsigned char* buf = (unsigned char*)calloc(1, cap);
+        char line[4096];
+        u64 counted = 0;
+        while (fgets(line, sizeof line, mf)) {
+            size_t n = strlen(line);
+            while (n && (line[n-1] == '\n' || line[n-1] == '\r')) line[--n] = 0;
+            if (!n) continue;
+            wchar_t wpath[4096];
+            MultiByteToWideChar(CP_UTF8, 0, line, -1, wpath, 4096);
+            FILE* bf = _wfopen(wpath, L"rb");
+            if (!bf) { printf("@@ %s rc=0 g=-2 len=0\n@@END\n", line); fflush(stdout); continue; }
+            size_t sz = fread(buf, 1, cap, bf);
+            fclose(bf);
+            if (sz > cap) sz = cap;
+            void* h = disasm(buf, (u64)sz, &g_out, NULL);
+            u32 rc = h ? code(h) : 1;
+            void* text = NULL; void* lenp = NULL;
+            int g = (h && rc == 0) ? getd(h, &text, &lenp) : -1;
+            u64 tl = (g == 0) ? (u64)lenp : 0;
+            printf("@@ %s rc=%u g=%d len=%llu\n", line, rc, g, (unsigned long long)tl);
+            if (g == 0 && text && tl && tl < (1u << 20)) fwrite(text, 1, (size_t)tl, stdout);
+            fputs("\n@@END\n", stdout);
+            fflush(stdout);
+            if (h) destroy(h);
+            counted++;
+        }
+        fclose(mf);
+        free(buf);
+        fprintf(stderr, "batch done: %llu blobs\n", (unsigned long long)counted);
+        return 0;
+    }
 
     u64* out = &g_out;
 

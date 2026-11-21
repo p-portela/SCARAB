@@ -46,7 +46,7 @@ def sopp_opcode(word):
 
 
 def vop1_opcode(word):
-    return (word >> 9) & 0xFF
+    return (word >> 17) & 0xFF
 
 
 def vop2_opcode(word):
@@ -70,6 +70,25 @@ def mimg_nsa(word):
     return None
 
 
+# A 1-dword family carries a second dword when its SRC0 field is the literal
+# sentinel 0xFF. Not applying this is why the walker drifts: the literal dword
+# gets decoded as an opcode and every boundary after it is wrong. Measured
+# against the vendor disassembler -- tools/xbsc_corpus_compare.py.
+LITERAL_OPERANDS = True
+LITERAL_FAMS = {"VOP1", "VOP2", "VOPC", "SOP1", "SOP2", "SOPC"}
+
+
+def src0_of(fam, word):
+    """The SRC0 field for the 1-dword families that can carry a literal.
+
+    VOP1 keeps SRC0 at [7:0] just like VOP2 -- confirmed against the vendor, which
+    merges a VOP1 whose SRC0 is 0xFF with the constant dword that follows it.
+    """
+    if fam in ("VOP1", "VOP2", "VOPC", "SOP1", "SOP2", "SOPC"):
+        return word & 0xFF
+    return None
+
+
 def instr_length(words, i):
     """Best-effort instruction length in dwords at words[i]. Returns (len, family)."""
     w = words[i]
@@ -78,8 +97,9 @@ def instr_length(words, i):
         return 2, fam
     if fam in TWO_WORD:
         return 2, fam
-    if fam == "UNKNOWN":
-        return 1, fam
+    if LITERAL_OPERANDS and fam in LITERAL_FAMS:
+        if src0_of(fam, w) == 0xFF and i + 1 < len(words):
+            return 2, fam
     return 1, fam
 
 

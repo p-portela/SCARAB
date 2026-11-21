@@ -110,12 +110,33 @@ sit after the end of the real program (the streams are padded with repeated
 `s_code_end`, `0xBF9F0000`) or immediately after a literal-consuming instruction
 whose word count was mis-decoded.
 
-Either way the next move is measurement, not more table archaeology:
+The measurement has now been run, and it settles the question:
 
-1. Run `XBSC_DisassembleRawShader` on real blobs (portable Wine, Linux) and
-   compare against the upstream shader recompiler decode. This answers the ISA questions outright and
-   validates or refutes `docs/fssm-analysis.md`. **Available now**: the signature is
-   recovered and the call is proven end to end — see `tools/xbsc_probe_notes.md`.
-2. Re-run the sweep checking instruction-boundary alignment rather than opcode
-   validity: for each rejected word, test whether decoding *stops* at a plausible
-   program end, and whether the preceding instruction consumed a literal.
+**It is our walker's instruction *length*, not a wrong opcode table and not a bad
+extraction.** Evidence, with the vendor as the reference:
+
+- The oracle runs the whole corpus: all 25,321 streams disassemble through
+  `XBSC_DisassembleRawShader` with no fault (`tools/xbsc_corpus.sh`).
+- Both decoders agree on *where the program ends*: the `s_code_end` padding tail and
+  the word holding `s_endpgm` match. So the extracted slice is right, and the word
+  streams are not the problem.
+- They disagree on how the code region is *cut*. On a 2,000-shader sample our walk
+  produces a different instruction count in 97.2% of shaders and is **never lower**
+  than the vendor — we split instructions the vendor keeps whole (typically by 2-5%
+  of the instruction count). Only 2.5% agree on the instruction index at which
+  `s_endpgm` is reached.
+- The families we see are the families the vendor prints (VOP*, SOP*, SMEM, EXP,
+  MIMG), so the top-level table is broadly right; what is wrong is the per-instruction
+  word count.
+
+The leading identified cause is the literal dword: a 1-dword instruction whose SRC0
+field is the `0xFF` sentinel is followed by a constant word, and until recently we did
+not consume it (see the `LITERAL_FAMS` rule in `rdna2_classify.py`). A boundary diff on
+one pixel shader (`tools/xbsc_boundaries.py`) still shows ~17% of boundaries disagreeing,
+so the length model needs fitting to the oracle rather than guessing — that tool prints
+the vendor's exact boundary set for any stream by prefix probing, which makes the fit
+mechanical.
+
+Also worth recording: the vendor itself emits `SOPP_invalid_32`-style lines (1-49 per
+shader in the sample), i.e. some words are not valid instructions for it either. That
+residue is separate from the boundary question and is not ours to fix.

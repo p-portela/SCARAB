@@ -54,6 +54,18 @@ Then the probe measured it. The decisive checks, all in `xbsc_probe.sh`:
   `s_endpgm` at word 19 and 40 `s_code_end` words after it; the vendor disassembler
   emits exactly that, wrapped in `shader main / asic(CI) / type(LS) / … / end`.
 
+## Using it as the oracle
+
+`xbsc_probe.exe <dll> <manifest.txt> batch` loads the DLL once and disassembles every
+blob listed in the manifest, emitting one `@@ <path> rc=… g=… len=…` record per blob
+with the text after it (stdout is flushed per record, so a crash names the offender).
+`tools/xbsc_corpus.sh` chunks the 25,321-stream corpus through it — the whole corpus
+disassembles with no fault. `tools/xbsc_corpus_compare.py` then diffs the vendor's
+output against our own walker, and `tools/xbsc_boundaries.py` recovers the vendor's
+*exact* instruction boundaries for a stream by prefix probing, which is how the
+length-model fit gets done. The measured result is written up in
+`docs/isa/shader-isa-notes.md` section 4.
+
 ## Ghidra addresses used (RVA + image base 0x180000000)
 
 | export / helper | VA |
