@@ -68,13 +68,33 @@ mechanical operation instead of 129 chances to make a mistake.
 |---|---|
 | PC-side vtable layout of the wrapper | **proven** — compiler-checked via `override` against the real header |
 | Which console methods exist | **recovered** — 105 method names + 106 `D3D12CONS_*` symbols, mined from the UMD's validation strings |
-| Which class a method belongs to | **partly recovered** — 10 methods are class-attributed by UMD messages that name the interface (`ID3D12Device::CreateCommandQueueX`, `ID3D12ConsDmaCommandList::FillRawBuffer`, `ID3D12CommandQueue::PresentX`, …) |
+| Which class a method belongs to | **partly recovered** — 10 methods are class-attributed by UMD messages that name the interface (`ID3D12Device::CreateCommandQueueX`, `ID3D12ConsDmaCommandList::FillRawBuffer`, `ID3D12CommandQueue::PresentX`, …), and 6 more are corroborated by call sites in the vendor's public sample set (below) |
 | `IID_ID3D12ConsDmaCommandList` value | **proven** — exported by the console runtime at ordinal 100 |
 | the other 9 console IIDs (`ID3D11DeviceX`, `ID3D11DeviceContextX`, `ID3D11DmaEngineContextX`, `ID3D11PerformanceDeviceX`, `ID3D11PerformanceContextX`, `ID3D11UserDefinedAnnotationX`, `ID3D11CounterSetX`, `ID3D11CounterSampleX`, `IGraphicsUnknown`) | **proven** — exported at known ordinals |
 | IIDs of `ID3D12ConsComputeCommandList` / `…6(Compute)` / `…8(Compute)` / `ID3D12ConsCopyCommandList6` | **NOT recovered** — not exported by the runtime. 7 candidate v4 UUIDs sit 16-byte-aligned immediately after `IID_ID3D12Device4` in the UMD's `.rdata`; they are recorded in `iid_provenance.json` as CANDIDATE, not used |
 | **the order of the appended console methods** | **ASSUMED** — assumption #1, see §4 |
 | the signatures of the console methods | **inferred** from UMD messages and the nearest PC method, marked per method |
 | the full catalogue | `wrap/docs/console-extension-catalogue.tsv` (105 methods, 106 enums) |
+
+### Class placement, corroborated by real call sites
+
+The console SDK publishes a sample set (the user supplies it; it is not committed
+here). Scanning its source for the appended methods gives the *receiver* of each call,
+which is independent of the UMD's error strings:
+
+| method | receiver seen in samples | therefore |
+|---|---|---|
+| `PresentX` | the command queue (367 sites) | belongs to `ID3D12CommandQueue` |
+| `SuspendX`, `ResumeX` | the command queue (122 each) | `ID3D12CommandQueue` |
+| `SetFrameIntervalX` | the device (122) | `ID3D12Device` |
+| `ScheduleFrameEventX` | the device (122) | `ID3D12Device` |
+| `WaitFrameEventX` | the device (121) | `ID3D12Device` |
+
+Same scan corroborates the free function's shape: `D3D12ConsCreateDevice(nullptr,
+&params, riid, out)` with a `D3D12CONS_CREATE_DEVICE_PARAMETERS`, 123 sites. It also
+shows what titles use that samples do not: `D3D12ConfigureVirtualMemoryX` and
+`D3D12UploadCustomMicrocodeX` appear in **no** sample, so nothing external documents
+them and our emulation remains the only implementation.
 
 ## 4. The one dangerous assumption, and how it is defused
 

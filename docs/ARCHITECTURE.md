@@ -184,6 +184,7 @@ they came from:
 | E14 | the console shader container is the standard DXBC/DXIL container | same fourcc, same parts (`SFI0 ISG1 OSG1 PSV0 HASH DXIL`), same nested `DXIL` tag; at payload+24 the console has `XDAT`→zlib→FSSM where DXC has `BC C0 DE`→bitcode. Measured by comparing a console shader against a locally produced DXC output |
 | E15 | we can produce real DXIL locally | `dxcompiler.dll` under Wine compiles HLSL to a container whose DXIL part holds LLVM bitcode — gate G6 |
 | E16 | the Linux forwarding path really is D3D12 → Vulkan | the runtime the bridge loads under Wine (`C:\windows\system32\d3d12.dll`) carries `vkd3d_create_device` / `vkd3d_create_instance` / `Failed to create vkd3d instance` / `vulkan-1.dll`, i.e. Wine's vkd3d-proton-derived `d3d12`; a device comes back through it with a Vulkan ICD present (lavapipe) — gates G4 and G7, log line `backend: vkd3d-proton / wine builtin (D3D12 -> Vulkan)` |
+| E17 | appended console methods' class placement, from real call sites | the console SDK's public sample set (not committed; the user supplies it) calls `PresentX`/`SuspendX`/`ResumeX` on the **command queue** (367/122/122 sites) and `SetFrameIntervalX`/`ScheduleFrameEventX`/`WaitFrameEventX` on the **device** (122/122/121). Also corroborates the 3-arg device-creation shape. Independently of the UMD's error strings |
 
 ## 7. Known risks
 
