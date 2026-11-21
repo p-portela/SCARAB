@@ -55,5 +55,8 @@ a PC runtime will accept it. See `../../docs/shader-abi-notes.md`. This is why
 `xbsc_xs.dll` — the console shader compiler in the vendor stack — also exports
 `XBSC_DisassembleRawShader` and `XBSC_AssembleShader`, and it **loads under Wine on
 Linux** (43/43 exports resolve). So the 25,321 streams do not have to be decoded by
-inference: the vendor ships the tool that decodes them. Recovering its call signatures
-(Ghidra on the export stubs) is the highest-value next step here.
+inference: the vendor ships the tool that decodes them, and the call is now recovered
+and working — `tools/xbsc_probe.{c,sh}` + `tools/xbsc_probe_notes.md`. Run
+`XBSC_DisassembleRawShader(code, size_bytes, &marker, NULL)` and read the text back
+with `XBSC_GetDisassembly`; that output is the oracle for every decoder question
+below.

@@ -114,7 +114,8 @@ Either way the next move is measurement, not more table archaeology:
 
 1. Run `XBSC_DisassembleRawShader` on real blobs (portable Wine, Linux) and
    compare against the the upstream shader recompiler decode. This answers the ISA questions outright and
-   validates or refutes `docs/fssm-analysis.md`.
+   validates or refutes `docs/fssm-analysis.md`. **Available now**: the signature is
+   recovered and the call is proven end to end — see `tools/xbsc_probe_notes.md`.
 2. Re-run the sweep checking instruction-boundary alignment rather than opcode
    validity: for each rejected word, test whether decoding *stops* at a plausible
    program end, and whether the preceding instruction consumed a literal.
