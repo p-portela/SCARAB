@@ -103,6 +103,21 @@ vkd3d-proton's job. `d3d12_xs_wrap.dll` and the shader path are backend-independ
 
 ## Cross-platform consequences worth knowing
 
+### Where Wine is and is not needed
+
+| activity | needs Wine on Linux? |
+|---|---|
+| configuring and building | **no** — LLVM-mingw cross-compiles with plain clang; Wine appears in the build only as the test-launcher variable |
+| gates G1 (export contract) and G5 (tooling) | **no** — plain `python3` |
+| gates G3 / G4 / G6 | **yes** — they are Windows PEs, and a PE cannot execute on Linux without a Windows loader. These tests are specifically *about* Windows ABI behaviour (COM vtables, PE loading), so this is structural |
+| all five gates on Windows | **no** — they run natively. The primary target needs no Wine at all |
+| producing DXIL for the shader path | **not for long** — currently G6 drives the *vendor's* `dxcompiler.dll` under Wine, but that is a convenience, not a requirement: Microsoft ships native Linux DXC (`dxc`, `libdxcompiler.so`, `libdxil.so`) and we should use it. See ROADMAP §6 |
+| running a title on Linux | **yes, by definition** — the title is a Windows PE. It runs under Wine/Proton; SCARAB plugs into that process and neither adds nor removes the requirement |
+
+So: the build is Wine-free, the primary (Windows) test path is Wine-free, and the one
+place Wine is used as a *convenience* rather than a necessity — the shader compiler —
+is scheduled to lose it.
+
 - **Shaders are the main one.** vkd3d-proton consumes **DXIL**, not SPIR-V, so DXIL is
   the portable target for the shader bridge: it works on Microsoft's runtime *and* on
   vkd3d-proton. Emitting SPIR-V only would lock that work to the Linux path. See

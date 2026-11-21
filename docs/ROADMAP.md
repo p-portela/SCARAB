@@ -139,6 +139,7 @@ encrypted with the retail ODK. Nothing in phases 1–3 waits on it.
 | **Grading** | every call is real / recorded / refused, and the grade is logged. No silent successes. |
 | **Provenance** | no vendor binaries or game data in the repo, ever. |
 | **Instruments before answers** | the QI audit and appended-slot log exist to convert unknowns into data from a live title. |
+| **Wine-free on Linux where it is not structural** | Wine is currently used in three places on Linux: running the PE test executables (G3/G4/G6) and driving the *vendor's* `dxcompiler.dll`. The first is structural - a Windows PE cannot execute on Linux without a Windows loader, and the tests are specifically about Windows ABI behaviour. The second is **not**: Microsoft ships native Linux DXC (`dxc`, `libdxcompiler.so`, `libdxil.so`), so the shader path should use that and drop Wine entirely. The build itself needs no Wine at all. |
 
 ## 3. Where the risk actually is
 
@@ -173,3 +174,39 @@ encrypted with the retail ODK. Nothing in phases 1–3 waits on it.
 2. Close the decoder alignment question (`docs/isa/shader-isa-notes.md` §4), or
    route around it using `xbsc_xs.dll`'s disassembler as the oracle.
 3. Emit HLSL for one passthrough shader and take it through DXC + sigdiff (Phase 1).
+
+## 6. Removing Wine from the Linux path (scoped, not yet done)
+
+Wine is in SCARAB for two different reasons, and only one of them is legitimate.
+
+| use | structural? | plan |
+|---|---|---|
+| running G3/G4/G6, which are Windows PEs | **yes** | a PE cannot execute on Linux without a Windows loader, and these tests are *about* Windows ABI behaviour (COM vtables, PE loading). Keep Wine here, or run `ctest` on Windows - which is the primary target and needs no Wine at all. |
+| G6 driving the vendor's `dxcompiler.dll` to emit DXIL | **no** | switch to native Linux DXC. See below. |
+| the build | n/a | already Wine-free: LLVM-mingw cross-compiles, and Wine appears only as the test launcher variable. |
+| the runtime (a title, on Linux) | **yes, and not ours** | the title is a Windows PE, so it runs under Wine/Proton by definition. Our layer plugs into that process; it neither adds nor removes the requirement. |
+
+### Native DXC
+
+Microsoft publishes Linux builds of DXC — `dxc`, `libdxcompiler.so`, `libdxil.so` — in
+the `microsoft/DirectXShaderCompiler` releases, in the `Microsoft.Direct3D.DXC` NuGet
+package, and as a distro package (`dxc`). Steps:
+
+1. Fetch and unpack the Linux DXC release; record it in `docs/PROVENANCE.md` as a
+   build-time tool (not vendored).
+2. Add `SCARAB_DXC_ROOT` to the platform module; resolve `libdxcompiler.so`/
+   `libdxil.so` from it.
+3. Add a native Linux target for the emitter test that `dlopen`s `libdxcompiler.so`
+   and calls the same `DxcCreateInstance` entry point. The interface is identical, so
+   only the loader differs (`LoadLibraryA` vs `dlopen`, `__cdecl` vs default).
+4. Make G6 prefer the native path and fall back to Wine **only** if `SCARAB_DXC_ROOT`
+   is unset, so the gate stops needing Wine the moment DXC is present.
+
+Worth doing before Phase 2 rather than after: it is small, it removes a moving part
+from the loop that Phase 2 will run thousands of times, and it gives us `libdxil.so`
+as a real validator instead of DXC's `-Vd` escape hatch.
+
+Note what does **not** change: `xbsc_xs.dll`, the vendor's console shader compiler and
+disassembler, is a Windows DLL with no Linux equivalent. Using it as a decoder oracle
+will need Wine or a Windows host — but that is an *analysis* tool run occasionally, not
+a dependency of the pipeline.
