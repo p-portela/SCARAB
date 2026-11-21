@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from peinfo import PE
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_VENDOR = os.environ.get("XTL_VENDOR", os.path.join(_ROOT, "vendor"))
+_VENDOR = os.environ.get("SCARAB_VENDOR", os.path.join(_ROOT, "vendor"))
 REF_DEFAULT = os.path.join(_VENDOR, "x64_dx12", "d3d12_xs.dll")
 
 

@@ -35,14 +35,14 @@ extern "C" {
 
 // Recovered console present flags (names evidence-backed, values unknown).
 typedef enum XtlconsolePresentFlag {
-    XTL_CONSOLE_PRESENT_NONE                 = 0,
-    XTL_CONSOLE_PRESENT_IMMEDIATE            = 0,
-    XTL_CONSOLE_PRESENT_PERSIST              = 0,
-    XTL_CONSOLE_PRESENT_UNIQUE_VIEW_RESOURCES= 0,
+    SCARAB_CONS_PRESENT_NONE                 = 0,
+    SCARAB_CONS_PRESENT_IMMEDIATE            = 0,
+    SCARAB_CONS_PRESENT_PERSIST              = 0,
+    SCARAB_CONS_PRESENT_UNIQUE_VIEW_RESOURCES= 0,
 } XtlconsolePresentFlag;
 
-#define XTL_CONSOLE_PRESENT_PLANES_MAX 2
-#define XTL_CONSOLE_PRESENT_VIEWS_MAX  8
+#define SCARAB_CONS_PRESENT_PLANES_MAX 2
+#define SCARAB_CONS_PRESENT_VIEWS_MAX  8
 
 typedef struct XtlFrameStatistics {
     uint64_t frame_count;         // console semantics; PC supplies what it can
@@ -51,17 +51,17 @@ typedef struct XtlFrameStatistics {
 } XtlFrameStatistics;
 
 // Register a PC swapchain so that a later DXGIXPresentArray can drive it.
-int xtl_present_register_swapchain(void* pc_swapchain, uint32_t id);
-int xtl_present_unregister_swapchain(uint32_t id);
+int scarab_present_register_swapchain(void* pc_swapchain, uint32_t id);
+int scarab_present_unregister_swapchain(uint32_t id);
 
 // Emulate DXGIXPresentArray over the registered swapchains.
-int xtl_present_array(const uint32_t* ids, uint32_t count, uint32_t flags);
+int scarab_present_array(const uint32_t* ids, uint32_t count, uint32_t flags);
 
 // vblank / frame notifications. Returns non-zero while unimplemented so callers
 // can distinguish "armed" from "acknowledged but inert".
-int xtl_present_set_vline_notification(uint32_t scanline, void* event_handle);
-int xtl_present_set_frame_notification(uint64_t frame_index, void* event_handle);
-int xtl_present_get_frame_statistics(XtlFrameStatistics* out);
+int scarab_present_set_vline_notification(uint32_t scanline, void* event_handle);
+int scarab_present_set_frame_notification(uint64_t frame_index, void* event_handle);
+int scarab_present_get_frame_statistics(XtlFrameStatistics* out);
 
 #ifdef __cplusplus
 }

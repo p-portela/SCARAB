@@ -8,8 +8,14 @@
 // the whole shader translation problem:
 //
 //     FSSM blob  ->  raw RDNA2 stream      components/shader-bridge/fssm_to_rdna2.py   [done]
-//                ->  SPIR-V / DXIL         the upstream shader recompiler's RDNA2->SPIR-V recompiler          [in progress]
+//                ->  DXIL                  the upstream shader recompiler's RDNA2 front-end + a DXIL emitter [in progress]
 //                ->  PC shader blob        this seam                                 [this header]
+//
+// TARGET IS DXIL, NOT SPIR-V. vkd3d-proton consumes DXIL, and so does Microsoft's
+// D3D12 runtime, so DXIL is the one output that serves both backends (Windows is
+// the primary target, Linux via vkd3d-proton the secondary). the upstream shader recompiler already emits
+// SPIR-V; that is useful as a Linux-only cross-check, but making it the primary
+// target would lock the shader work to the Linux path.
 //
 // STATUS: extraction is done and the RDNA2 stream is available for all 25,321
 // shaders. Recompilation is blocked on decoder coverage and on a missing
@@ -30,16 +36,16 @@ extern "C" {
 #endif
 
 typedef enum XtlShaderStage {
-    XTL_SHADER_STAGE_UNKNOWN = 0,
-    XTL_SHADER_STAGE_VS,
-    XTL_SHADER_STAGE_PS,
-    XTL_SHADER_STAGE_GS,
-    XTL_SHADER_STAGE_HS,
-    XTL_SHADER_STAGE_DS,
-    XTL_SHADER_STAGE_CS,
-    XTL_SHADER_STAGE_MS,   // mesh   (SM 6.5+; mandatory on Scarlett)
-    XTL_SHADER_STAGE_AS,   // amplification
-    XTL_SHADER_STAGE_RAY,  // XDXR
+    SCARAB_SHADER_STAGE_UNKNOWN = 0,
+    SCARAB_SHADER_STAGE_VS,
+    SCARAB_SHADER_STAGE_PS,
+    SCARAB_SHADER_STAGE_GS,
+    SCARAB_SHADER_STAGE_HS,
+    SCARAB_SHADER_STAGE_DS,
+    SCARAB_SHADER_STAGE_CS,
+    SCARAB_SHADER_STAGE_MS,   // mesh   (SM 6.5+; mandatory on Scarlett)
+    SCARAB_SHADER_STAGE_AS,   // amplification
+    SCARAB_SHADER_STAGE_RAY,  // XDXR
 } XtlShaderStage;
 
 typedef struct XtlShaderTranslateStats {
@@ -55,7 +61,7 @@ typedef struct XtlShaderTranslateStats {
 
 // Unwrap the console container and report what is inside, without translating.
 // Cheap; used for triage over the whole corpus.
-int xtl_shader_unwrap(const void* fssm, size_t fssm_size,
+int scarab_shader_unwrap(const void* fssm, size_t fssm_size,
                       const void** out_rdna2, size_t* out_rdna2_size,
                       XtlShaderTranslateStats* out_stats);
 
@@ -63,14 +69,14 @@ int xtl_shader_unwrap(const void* fssm, size_t fssm_size,
 // Returns 0 on success; non-zero on refusal, which is the expected outcome until
 // the recompiler covers the whole corpus. On refusal, *out_diagnostic receives a
 // human-readable reason (owned by the caller's allocator contract below).
-int xtl_shader_translate(const void* fssm, size_t fssm_size,
+int scarab_shader_translate(const void* fssm, size_t fssm_size,
                          XtlShaderStage stage, const void* root_signature, size_t root_signature_size,
                          void** out_pc_blob, size_t* out_pc_blob_size,
                          char* out_diagnostic, size_t diagnostic_capacity);
 
 // Bindings for shaders that read buffers/images. console supplies these through the
 // PSO root signature; a PC shader needs them baked in. Returns 0 on success.
-int xtl_shader_synthesise_bindings(const void* root_signature, size_t root_signature_size,
+int scarab_shader_synthesise_bindings(const void* root_signature, size_t root_signature_size,
                                    const void* pc_blob, size_t pc_blob_size,
                                    void** out_bound_blob, size_t* out_bound_blob_size);
 

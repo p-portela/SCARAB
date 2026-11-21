@@ -7,9 +7,14 @@ This component is that translation.
 
 ```
 FSSM blob -> raw RDNA2 stream      fssm_to_rdna2.py                         done, 25,321 shaders
-          -> SPIR-V / DXIL         the upstream shader recompiler's RDNA2->SPIR-V recompiler        in progress
+          -> DXIL                  the upstream shader recompiler front-end + a DXIL emitter          in progress
           -> PC shader blob        include/shader_bridge.h                  this seam
 ```
+
+**The target is DXIL, not SPIR-V.** vkd3d-proton consumes DXIL and so does Microsoft's
+D3D12 runtime, so DXIL is the one output that serves both backends — and Windows is the
+primary target. the upstream shader recompiler already emits SPIR-V; that is worth keeping as a Linux-only
+cross-check, but making it primary would lock this component to the Linux path.
 
 ## Contents
 
@@ -43,7 +48,7 @@ that convention, and therefore the remaining sweep failures are more likely
 console takes shader bindings from the **PSO root signature**, not from a per-shader header,
 so any shader that reads buffers or images needs an SRT/BDA equivalent synthesised before
 a PC runtime will accept it. See `../../docs/shader-abi-notes.md`. This is why
-`shader_bridge.h` exposes `xtl_shader_synthesise_bindings` separately from translation.
+`shader_bridge.h` exposes `scarab_shader_synthesise_bindings` separately from translation.
 
 ## A free oracle
 

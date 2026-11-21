@@ -5,11 +5,11 @@
 #include <windows.h>
 #include <cstdio>
 
-extern "C" int d3d12xs_wrapper_selftest(void);
+extern "C" int scarab_wrapper_selftest(void);
 
 int main() {
     printf("d3d12xs wrapper self-test\n");
-    int fails = d3d12xs_wrapper_selftest();
+    int fails = scarab_wrapper_selftest();
     printf(fails == 0 ? "RESULT: PASS (0 failures)\n"
                       : "RESULT: FAIL\n");
     printf("see the .wrap.log next to this executable for the full trace\n");

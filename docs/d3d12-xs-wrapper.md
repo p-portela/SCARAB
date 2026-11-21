@@ -40,7 +40,7 @@ title
 The two artefacts are separate components on purpose:
 
 - **The bridge is header-free and has no link-time dependency on the wrapper.**
-  It resolves `d3d12xs_wrap_device` with `LoadLibrary`/`GetProcAddress`. Without
+  It resolves `scarab_wrap_device` with `LoadLibrary`/`GetProcAddress`. Without
   the wrapper the bridge still serves the entire standard API and only extension
   calls are lost — and its export contract stays exactly what the console runtime
   published (still verified byte-exact, 116/116).
@@ -143,7 +143,7 @@ the standard PC interfaces.
 
 ### 5.3 the bug this test caught
 
-The first run crashed with an execute-access violation. Cause: `d3d12xs_wrap_device`
+The first run crashed with an execute-access violation. Cause: `scarab_wrap_device`
 blind-cast the PC device to `ID3D12Device4`. A device created as `ID3D12Device`
 may be exactly that, so treating it as `ID3D12Device4` puts methods past the end
 of its vtable and any call to one jumps into whatever bytes follow.
@@ -206,7 +206,7 @@ The wrapper is set up so that learning more makes it more complete, mechanically
    `wrap/console_extensions.h`, regenerate, rebuild. The `override` check will
    reject a wrong signature.
 2. Confirm an order: run a title with the QI audit on
-   (`d3d12xs_wrapper_set_qi_audit(1)`) and read the slot log. The indices the log
+   (`scarab_wrapper_set_qi_audit(1)`) and read the slot log. The indices the log
    reports *are* the order.
 3. Confirm an IID: same log. Any console IID we do not know appears there.
 4. Implement a method: give it real semantics and drop it from the log-only set.

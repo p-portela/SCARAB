@@ -1,24 +1,39 @@
 # build outputs
 build/
+out/
 cmake-build-*/
 *.o
+*.obj
 *.a
 *.lib
 *.exp
+*.pdb
+*.ilk
 *.exe
 *.dll
 *.log
 
-# generated from the real header / the genuine runtime - not sources
-components/extension-wrapper/src/gen_device.inc
-components/extension-wrapper/src/gen_clist.inc
+# generated from the real header / the genuine runtime - never sources, and never
+# committed from anywhere (an unanchored pattern so a stray copy in any component
+# is caught rather than silently used)
+gen_device.inc
+gen_clist.inc
 
-# linked artifact trees (see scripts/link-artifacts.sh) - never committed.
-# These are Microsoft's binaries and the publisher's game data; the repository must
-# not contain them. See docs/PROVENANCE.md.
-vendor/
-corpora/
+# linked artifact trees (see scripts/link-artifacts.sh, scripts/link-artifacts.ps1).
+# No leading-dot anchoring and no trailing slash: these entries are symbolic links
+# on a Linux checkout, and a `dir/` pattern does not match a symlink - which would
+# leave the link itself committable. Both trees are Microsoft's binaries and
+# the publisher's game data; see docs/PROVENANCE.md.
+/vendor
+/corpora
 
 # python
 __pycache__/
 *.pyc
+
+# editors / OS
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+desktop.ini

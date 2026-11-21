@@ -2,6 +2,6 @@
 ; component so the bridge can load it optionally and its own export contract
 ; stays exactly what the console runtime published.
 EXPORTS
-    d3d12xs_wrap_device             @1
-    d3d12xs_wrapper_selftest        @2
-    d3d12xs_wrapper_set_qi_audit    @3
+    scarab_wrap_device             @1
+    scarab_wrapper_selftest        @2
+    scarab_wrapper_set_qi_audit    @3

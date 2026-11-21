@@ -19,7 +19,7 @@ TOOLS = os.path.join(ROOT, "tools")
 sys.path.insert(0, TOOLS)
 sys.path.insert(0, os.path.join(ROOT, "components", "shader-bridge"))
 
-VENDOR = os.environ.get("XTL_VENDOR", os.path.join(ROOT, "vendor"))
+VENDOR = os.environ.get("SCARAB_VENDOR", os.path.join(ROOT, "vendor"))
 REF = os.path.join(VENDOR, "x64_dx12", "d3d12_xs.dll")
 HEADER = os.path.join(VENDOR, "d3d12", "include", "d3d12.h")
 
@@ -168,6 +168,64 @@ def test_extension_catalogue_is_present_and_complete():
     for want in ("CreateCommandQueueX", "FillRawBuffer", "SetFrameIntervalX",
                  "OMSetFrontAndBackStencilRef"):
         assert any(want in m for m in methods), "catalogue lost %s" % want
+
+
+# --------------------------------------------------------------- repo hygiene --
+def _git(*args):
+    import subprocess
+    return subprocess.run(["git", "-C", ROOT] + list(args),
+                          capture_output=True, text=True)
+
+
+def test_repo_hygiene_no_artifacts_tracked():
+    """No artefact may ever enter the index.
+
+    Regression guard with a real history: the first .gitignore used `vendor/`, a
+    directory pattern, which does NOT match a symbolic link - so `git add -A`
+    committed the vendor symlink itself. Only an ad-hoc check caught it, which is
+    why this test exists.
+    """
+    if not os.path.isdir(os.path.join(ROOT, ".git")):
+        print("SKIP (not a git checkout)")
+        return
+    tracked = _git("ls-files").stdout.split()
+    bad = [p for p in tracked
+           if re.match(r"^(vendor|corpora|build)(/|$)", p)
+           or p.endswith((".dll", ".exe", ".log", ".obj", ".lib", ".pdb"))
+           or os.path.basename(p) in ("gen_device.inc", "gen_clist.inc")]
+    assert not bad, "artefacts are tracked: %s" % bad[:5]
+
+
+def test_repo_hygiene_ignore_rules_cover_the_symlinks():
+    """The ignore rules must match the links, not just hypothetical directories.
+
+    `vendor` is a symlink on a Linux checkout, so a `vendor/` pattern silently
+    fails to match it. --no-index because a tracked path is reported as
+    not-ignored, which would mask exactly the failure being guarded against.
+    """
+    if not os.path.isdir(os.path.join(ROOT, ".git")):
+        print("SKIP (not a git checkout)")
+        return
+    for name in ("vendor", "corpora"):
+        r = _git("check-ignore", "-q", "--no-index", name)
+        assert r.returncode == 0, "%s is not ignored (rc=%d)" % (name, r.returncode)
+    for gen in ("gen_device.inc", "gen_clist.inc"):
+        r = _git("check-ignore", "-q", "--no-index", gen)
+        assert r.returncode == 0, "%s is not ignored" % gen
+
+
+def test_platform_module_discriminates_on_the_host_not_the_target():
+    """WIN32 is true when cross-compiling *to* Windows, so it identifies the
+    target. Using it to decide how to launch a test executable silently runs a PE
+    through the shell. CMAKE_CROSSCOMPILING is the host question.
+    """
+    p = os.path.join(ROOT, "cmake", "scarab-platform.cmake")
+    txt = open(p, encoding="utf-8").read()
+    assert "CMAKE_CROSSCOMPILING" in txt, "platform module does not test the host"
+    assert not re.search(r"^if\(WIN32\)", txt, re.M), \
+        "platform module branches on WIN32, which describes the target"
+    assert "find_package(Python3" in txt, \
+        "python must be resolved, not assumed to be `python3` (absent on Windows)"
 
 
 # ------------------------------------------------------------------- runner --

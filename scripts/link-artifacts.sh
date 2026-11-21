@@ -2,18 +2,18 @@
 # Link the artefacts this project builds against and analyses.
 #
 # The repository never contains Microsoft's binaries or the publisher's game data, so
-# builds reach them through symlinks created here. Point XTL_ARTIFACTS at the
+# builds reach them through symlinks created here. Point SCARAB_ARTIFACTS at the
 # directory holding vendor/ and the extracted corpora.
 #
-#   XTL_ARTIFACTS=~/Documents/scarab-artifacts   (default)
+#   SCARAB_ARTIFACTS=~/Documents/scarab-artifacts   (default)
 set -euo pipefail
 
-ART="${XTL_ARTIFACTS:-$HOME/Documents/scarab-artifacts}"
+ART="${SCARAB_ARTIFACTS:-$HOME/Documents/scarab-artifacts}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 if [ ! -d "$ART" ]; then
   echo "artifacts directory not found: $ART" >&2
-  echo "set XTL_ARTIFACTS to the directory holding vendor/ and the corpora" >&2
+  echo "set SCARAB_ARTIFACTS to the directory holding vendor/ and the corpora" >&2
   exit 1
 fi
 

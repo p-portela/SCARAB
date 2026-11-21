@@ -2,7 +2,7 @@
 # Configure and build every component. Cross-compiles for 64-bit Windows.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BUILD="${XTL_BUILD_DIR:-$ROOT/build}"
+BUILD="${SCARAB_BUILD_DIR:-$ROOT/build}"
 
 if [ ! -e "$ROOT/vendor" ]; then
   echo "vendor/ not linked; running scripts/link-artifacts.sh"
@@ -11,7 +11,7 @@ fi
 
 cmake -S "$ROOT" -B "$BUILD" \
       -DCMAKE_TOOLCHAIN_FILE="$ROOT/cmake/toolchain-mingw.cmake" \
-      -DCMAKE_BUILD_TYPE="${XTL_BUILD_TYPE:-Release}" \
+      -DCMAKE_BUILD_TYPE="${SCARAB_BUILD_TYPE:-Release}" \
       "$@"
 
 cmake --build "$BUILD" --parallel

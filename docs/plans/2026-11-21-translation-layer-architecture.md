@@ -91,7 +91,7 @@ Everything the title can call is graded, and the grade is visible in the log:
 ## 3. Repo layout
 
 ```
-console-translation-layer/
+scarab/
   CMakeLists.txt                  top-level; drives both components
   cmake/toolchain-mingw.cmake     Linux -> x86_64-w64-windows-gnu (LLVM-mingw)
   README.md                       what this is, how to build, how to test
@@ -125,12 +125,12 @@ console-translation-layer/
     isa/                          ISA mnemonics + spec text + notes
     ... (existing analysis docs move here)
   scripts/
-    link-artifacts.sh             symlink vendor/ and corpora/ from $XTL_ARTIFACTS
+    link-artifacts.sh             symlink vendor/ and corpora/ from $SCARAB_ARTIFACTS
     build.sh                      configure + build via CMake
     test.sh                       wrapper for tests/run_tests.sh
 ```
 
-Repo at `~/Documents/console-translation-layer`. Game artifacts stay where they are
+Repo at `~/Documents/scarab`. Game artifacts stay where they are
 (`~/Documents/scarab-artifacts`); the repo never contains them.
 
 ## 4. Decisions and their reasons
@@ -173,7 +173,7 @@ G1–G4 already pass today; the repo work must keep them passing across the move
 Bite-sized, in order. Each ends with a commit.
 
 ### Task 1: scaffold the repo
-- Create `~/Documents/console-translation-layer` with `git init`, `.gitignore`
+- Create `~/Documents/scarab` with `git init`, `.gitignore`
   (`vendor/`, `corpora/`, `build/`, `*.log`, `*.exe`, `*.dll`, `__pycache__/`),
   `LICENSE` (MIT), directory skeleton.
 - Verify: `git status` shows only `.gitignore`/`LICENSE` as untracked.
@@ -186,9 +186,9 @@ Bite-sized, in order. Each ends with a commit.
 - Verify: tree matches §3.
 
 ### Task 3: de-hardcode paths
-- `tools/gen_wrappers.py`: header path from `$XTL_VENDOR` or `vendor/`.
-- `tools/verify_exports.py`: reference DLL from `$XTL_VENDOR` or `vendor/`.
-- `tools/fssm_*.py`, `extract_shaders.py`: corpus paths from `$XTL_CORPORA`.
+- `tools/gen_wrappers.py`: header path from `$SCARAB_VENDOR` or `vendor/`.
+- `tools/verify_exports.py`: reference DLL from `$SCARAB_VENDOR` or `vendor/`.
+- `tools/fssm_*.py`, `extract_shaders.py`: corpus paths from `$SCARAB_CORPORA`.
 - `scripts/link-artifacts.sh` creates the symlinks.
 - Verify: `scripts/link-artifacts.sh && python3 tools/verify_exports.py` → PASS.
 

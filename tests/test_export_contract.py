@@ -14,12 +14,12 @@ import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-VENDOR = os.environ.get("XTL_VENDOR", os.path.join(ROOT, "vendor"))
+VENDOR = os.environ.get("SCARAB_VENDOR", os.path.join(ROOT, "vendor"))
 REF = os.path.join(VENDOR, "x64_dx12", "d3d12_xs.dll")
 
 
 def find_built():
-    for base in (os.environ.get("XTL_BUILD_DIR", os.path.join(ROOT, "build")),):
+    for base in (os.environ.get("SCARAB_BUILD_DIR", os.path.join(ROOT, "build")),):
         for dirpath, _dirs, files in os.walk(base):
             if "d3d12_xs.dll" in files:
                 return os.path.join(dirpath, "d3d12_xs.dll")

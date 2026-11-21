@@ -7,6 +7,12 @@ What does not exist on a PC is the *environment*: the console OS APIs and the co
 GPU driver stack. So this is a translation layer, not an emulator, and the entire
 problem is the boundary between the title and the platform.
 
+**Windows is the primary target**; Linux is a supported secondary host. That is not
+symmetry for its own sake: on Windows the layer forwards to Microsoft's own D3D12
+runtime, which is the reference implementation and what a title would face in the
+intended scenario, while on Linux it forwards to vkd3d-proton. Both are worth having,
+because a discrepancy between them is a strong signal about which layer is at fault.
+
 That boundary has two halves, and they cost very different amounts:
 
 - **D3D12 itself is cheap to bridge**, because the console and PC runtimes define the
@@ -46,13 +52,39 @@ D3D12 runtime. L2c and L2d are known-scope work with the recovery evidence alrea
 hand. L3 is research with two viable paths. L0 and L1 buy information rather than
 function, so they are deliberately not started.
 
+### 2.3 Backends, and why the backend is not a compile-time choice
+
+Every backend implements the same D3D12 entry points under the same names, so "which
+platform" reduces to "which `d3d12.dll` do we load". That means the forwarding code in
+L2a is byte-for-byte identical on Windows and Linux, and the difference is a runtime
+lookup rather than an `#ifdef`:
+
+| backend | platform | how it is reached |
+|---|---|---|
+| Microsoft D3D12 (system) | Windows | default lookup |
+| Microsoft Agility SDK | Windows | an app-local `D3D12Core.dll`; we load the *loader*, never the core (the core exports only `D3D12GetInterface` and `D3D12SDKVersion`) |
+| vkd3d-proton (D3D12 → Vulkan) | Linux | automatic under Proton, else `SCARAB_D3D12_DLL` |
+
+`SCARAB_BACKEND` declares the expectation and a mismatch is logged loudly, and the
+resolved backend (path + version resource) is written to the log on load — so "which
+runtime am I actually on?" is answerable without a debugger.
+
+Two consequences worth stating:
+
+- **DXVK is not the Linux answer.** DXVK covers D3D9/10/11; D3D12 on Vulkan is
+  vkd3d-proton. Getting this wrong would send the Linux path down a dead end.
+- **L3's output target should be DXIL, not SPIR-V.** vkd3d-proton consumes DXIL, and so
+  does Microsoft's runtime, so DXIL is the one target that serves both backends. Emitting
+  SPIR-V (which the upstream shader recompiler already does) would be a Linux-only fast path, useful as a
+  cross-check but not the primary.
+
 ## 3. Components
 
 | component | artefact | responsibility | state |
 |---|---|---|---|
 | `runtime-bridge` | `d3d12_xs.dll` | the console runtime's 116 exports; forward the standard API, emulate the console-only free functions | built; contract byte-exact; runs under Wine |
 | `extension-wrapper` | `d3d12_xs_wrap.dll` | appended `X` methods, console command-list types/IIDs, `CreateCommandList` interception, QI audit | built; self-test 19/19; integrated end-to-end |
-| `shader-bridge` | (library + tooling) | FSSM → RDNA2 → SPIR-V/DXIL; root-signature → bindings | extraction done for all 25,321 shaders; recompiler in progress |
+| `shader-bridge` | (library + tooling) | FSSM → RDNA2 → **DXIL** (the target both backends accept); SPIR-V as a Linux-only cross-check; root-signature → bindings | extraction done for all 25,321 shaders; recompiler in progress |
 | `memory-adapter` | (library) | console resource/heap flags, DCC and HTILE compression, tiling → PC heaps | seam only |
 | `present-adapter` | (library) | `DXGIXPresentArray`, vblank/frame notifications → PC DXGI | seam only |
 

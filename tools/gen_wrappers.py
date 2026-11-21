@@ -9,13 +9,16 @@ interface, so the compiler additionally verifies via `override` that every
 signature matches -- the generated code cannot drift from the ABI.
 
 Usage:
-    python3 tools/gen_wrappers.py ID3D12Device4      > wrap/src/gen_device.inc
-    python3 tools/gen_wrappers.py ID3D12GraphicsCommandList6 > wrap/src/gen_clist.inc
+    python3 tools/gen_wrappers.py ID3D12Device4 -o gen_device.inc
+    python3 tools/gen_wrappers.py ID3D12GraphicsCommandList6 -o gen_clist.inc
+
+Writing to a file with -o rather than relying on shell redirection keeps the
+build step portable: `>` is a shell feature and does not exist in cmd.exe.
 """
 import re, sys, os
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_VENDOR = os.environ.get("XTL_VENDOR", os.path.join(_ROOT, "vendor"))
+_VENDOR = os.environ.get("SCARAB_VENDOR", os.path.join(_ROOT, "vendor"))
 H = os.path.join(_VENDOR, "d3d12", "include", "d3d12.h")
 SKIP = {
     # IUnknown: hand-written, because QueryInterface is where the console IIDs
@@ -188,12 +191,24 @@ def emit(ifaces, target, wrapper_member="m_pc", indent="    "):
 
 
 def main():
+    args = [a for a in sys.argv[1:] if not a.startswith("-")]
+    out_path = None
+    for i, a in enumerate(sys.argv):
+        if a in ("-o", "--output") and i + 1 < len(sys.argv):
+            out_path = sys.argv[i + 1]
+        elif a.startswith("--output="):
+            out_path = a.split("=", 1)[1]
+
     txt = load()
     ifaces = interfaces(txt)
-    target = sys.argv[1] if len(sys.argv) > 1 else "ID3D12Device4"
+    target = args[0] if args else "ID3D12Device4"
     body, n = emit(ifaces, target)
     sys.stderr.write("parsed %d interfaces; emitted %d methods for %s\n" % (len(ifaces), n, target))
-    print(body)
+    if out_path:
+        with open(out_path, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(body + "\n")
+    else:
+        print(body)
 
 
 if __name__ == "__main__":

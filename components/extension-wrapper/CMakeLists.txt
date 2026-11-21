@@ -15,57 +15,50 @@ set(_gen "${CMAKE_CURRENT_BINARY_DIR}/generated")
 file(MAKE_DIRECTORY "${_gen}")
 
 # Forwarding stubs are GENERATED from the real header so they cannot drift from
-# the ABI. Regenerated on every build that touches the header or the generator.
+# the ABI. Note the -o form rather than shell redirection: `>` does not exist in
+# cmd.exe, so a redirect here would make the Windows build impossible.
 add_custom_command(
   OUTPUT "${_gen}/gen_device.inc" "${_gen}/gen_clist.inc"
-  COMMAND ${CMAKE_COMMAND} -E make_directory "${_gen}"
-  COMMAND python3 "${CMAKE_SOURCE_DIR}/tools/gen_wrappers.py" ID3D12Device4
-          > "${_gen}/gen_device.inc"
-  COMMAND python3 "${CMAKE_SOURCE_DIR}/tools/gen_wrappers.py" ID3D12GraphicsCommandList6
-          > "${_gen}/gen_clist.inc"
+  COMMAND "${SCARAB_PYTHON}" "${CMAKE_SOURCE_DIR}/tools/gen_wrappers.py"
+          ID3D12Device4 --output "${_gen}/gen_device.inc"
+  COMMAND "${SCARAB_PYTHON}" "${CMAKE_SOURCE_DIR}/tools/gen_wrappers.py"
+          ID3D12GraphicsCommandList6 --output "${_gen}/gen_clist.inc"
   DEPENDS "${CMAKE_SOURCE_DIR}/tools/gen_wrappers.py"
-          "${XTL_VENDOR}/d3d12/include/d3d12.h"
+          "${SCARAB_VENDOR}/d3d12/include/d3d12.h"
   COMMENT "Generating ABI-exact forwarding stubs from d3d12.h"
   VERBATIM
 )
 
-# Object library so the self-test can exercise the same code the DLL ships.
-# The generated stubs are listed as HEADER_FILE_ONLY sources: that is what makes
-# CMake actually run the custom command above. Without listing them they are
-# never built and a stale copy somewhere on the include path gets used instead -
-# which is exactly the silent drift this generator exists to prevent.
+# Listed as HEADER_FILE_ONLY sources: that is what makes CMake actually run the
+# custom command. Without listing them they are never built and a stale copy
+# somewhere on the include path gets used instead - exactly the silent drift this
+# generator exists to prevent.
 set_source_files_properties(
   "${_gen}/gen_device.inc" "${_gen}/gen_clist.inc"
   PROPERTIES HEADER_FILE_ONLY TRUE)
 
-add_library(xtl_wrapper_impl OBJECT
+# Object library so the self-test can exercise the same code the DLL ships.
+add_library(scarab_wrapper_impl OBJECT
   src/wrap.cpp
   src/guid_defs.cpp
   "${_gen}/gen_device.inc"
   "${_gen}/gen_clist.inc"
 )
-target_include_directories(xtl_wrapper_impl PUBLIC
+target_include_directories(scarab_wrapper_impl PUBLIC
   "${CMAKE_CURRENT_SOURCE_DIR}"
   "${CMAKE_CURRENT_SOURCE_DIR}/src"
   "${_gen}"
-  "${XTL_VENDOR}/d3d12/include"
+  "${SCARAB_VENDOR}/d3d12/include"
 )
-target_compile_options(xtl_wrapper_impl PRIVATE
-  -Wno-unused-parameter -Wno-cast-function-type)
+scarab_strict_warnings(scarab_wrapper_impl)
 
-add_library(d3d12_xs_wrap SHARED
-  $<TARGET_OBJECTS:xtl_wrapper_impl>
-)
+add_library(d3d12_xs_wrap SHARED $<TARGET_OBJECTS:scarab_wrapper_impl>)
 target_include_directories(d3d12_xs_wrap PRIVATE
   "${CMAKE_CURRENT_SOURCE_DIR}"
   "${CMAKE_CURRENT_SOURCE_DIR}/src"
   "${_gen}"
-  "${XTL_VENDOR}/d3d12/include"
+  "${SCARAB_VENDOR}/d3d12/include"
 )
 target_link_libraries(d3d12_xs_wrap PRIVATE ole32 oleaut32 uuid user32 kernel32)
-target_link_options(d3d12_xs_wrap PRIVATE
-  -static
-  -Wl,--kill-at
-  "${CMAKE_CURRENT_SOURCE_DIR}/d3d12_xs_wrap.def"
-)
-set_target_properties(d3d12_xs_wrap PROPERTIES PREFIX "" OUTPUT_NAME "d3d12_xs_wrap")
+scarab_configure_shared(d3d12_xs_wrap "${CMAKE_CURRENT_SOURCE_DIR}/d3d12_xs_wrap.def")
+set_target_properties(d3d12_xs_wrap PROPERTIES OUTPUT_NAME "d3d12_xs_wrap")

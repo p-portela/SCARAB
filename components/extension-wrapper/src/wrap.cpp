@@ -64,7 +64,7 @@ static void wlog(const char* fmt, ...) {
     LeaveCriticalSection(&g_cs);
 }
 
-extern "C" void d3d12xs_wrapper_set_qi_audit(int on) {
+extern "C" void scarab_wrapper_set_qi_audit(int on) {
     InterlockedExchange(&g_qi_audit, on ? 1 : 0);
 }
 
@@ -375,7 +375,7 @@ struct DeviceWrapper : public ID3D12DeviceX {
 // --------------------------------------------------------------------------
 // entry points for the bridge
 // --------------------------------------------------------------------------
-extern "C" HRESULT d3d12xs_wrap_device(void* pcDevice, REFIID riid, void** ppv) {
+extern "C" HRESULT scarab_wrap_device(void* pcDevice, REFIID riid, void** ppv) {
     if (!pcDevice || !ppv) return E_POINTER;
     *ppv = nullptr;
 
@@ -397,10 +397,10 @@ extern "C" HRESULT d3d12xs_wrap_device(void* pcDevice, REFIID riid, void** ppv) 
         if (FAILED(qhr) || !p) continue;
         if (eq(*iid, IID_ID3D12Device4)) { pc4 = (ID3D12Device4*)p; break; }
         ((IUnknown*)p)->Release();
-        wlog("d3d12xs_wrap_device: PC device lacks ID3D12Device4 (has %08lx)", iid->Data1);
+        wlog("scarab_wrap_device: PC device lacks ID3D12Device4 (has %08lx)", iid->Data1);
     }
     if (!pc4) {
-        wlog("d3d12xs_wrap_device: PC device does not implement ID3D12Device4; refusing to "
+        wlog("scarab_wrap_device: PC device does not implement ID3D12Device4; refusing to "
              "wrap. The device will go out unwrapped and console extension calls will not "
              "be served - which is the safe failure.");
         return E_NOINTERFACE;
@@ -410,7 +410,7 @@ extern "C" HRESULT d3d12xs_wrap_device(void* pcDevice, REFIID riid, void** ppv) 
     if (!w) return E_OUTOFMEMORY;
     HRESULT hr = w->QueryInterface(riid, ppv);
     w->Release();
-    wlog("d3d12xs_wrap_device(%p, %08lx) -> 0x%08lx", pcDevice, riid.Data1, (unsigned long)hr);
+    wlog("scarab_wrap_device(%p, %08lx) -> 0x%08lx", pcDevice, riid.Data1, (unsigned long)hr);
     return hr;
 }
 
@@ -419,10 +419,10 @@ extern "C" HRESULT d3d12xs_wrap_device(void* pcDevice, REFIID riid, void** ppv) 
 // A null PC object is passed on purpose: QI routing, refcounting, validation and
 // unknown-slot logging must all behave without one.
 // --------------------------------------------------------------------------
-extern "C" int d3d12xs_wrapper_selftest(void) {
+extern "C" int scarab_wrapper_selftest(void) {
     int checks = 0, fails = 0;
     wlog("=== wrapper self-test ===");
-    d3d12xs_wrapper_set_qi_audit(1);
+    scarab_wrapper_set_qi_audit(1);
 
     DeviceWrapper* d = new DeviceWrapper(nullptr);
     void* pv = nullptr;

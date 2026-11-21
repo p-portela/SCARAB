@@ -33,6 +33,7 @@
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <windows.h>
+#include <winver.h>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
@@ -79,6 +80,79 @@ static void blog(const char* fmt, ...) {
     LeaveCriticalSection(&g_log_cs);
 }
 
+// ---------------------------- backend resolution ---------------------------
+// SCARAB does not hard-code *which* D3D12 runtime it forwards to. Every backend
+// implements the same entry points under the same names, so "which backend"
+// reduces to "which d3d12.dll do we load":
+//
+//   Windows (primary)  Microsoft's runtime. Either the system one in System32, or
+//                      the app-local Agility SDK: shipping D3D12Core.dll next to
+//                      the title is enough, because the loader d3d12.dll picks it
+//                      up. We always load the *loader*, never D3D12Core.dll -
+//                      that one exports only D3D12GetInterface and D3D12SDKVersion
+//                      and cannot supply D3D12CreateDevice.
+//   Linux (secondary)  vkd3d-proton (D3D12 -> Vulkan). It ships its own
+//                      d3d12.dll, so the forwarding code below is unchanged.
+//                      Under Proton the loader already resolves to it; under
+//                      plain Wine point SCARAB_D3D12_DLL at vkd3d's d3d12.dll.
+//
+//   SCARAB_D3D12_DLL   explicit path to the runtime to load (wins over all)
+//   SCARAB_BACKEND     auto | d3d12 | vkd3d   - declares the expectation, and a
+//                      mismatch is reported loudly rather than silently tolerated
+//
+// Note: DXVK is not a candidate. DXVK covers D3D9/10/11; D3D12 on Vulkan is
+// vkd3d-proton's job.
+
+static const wchar_t* g_backend_kind = L"unknown";
+
+static void read_file_version(const wchar_t* path, wchar_t* out, size_t cap) {
+    if (cap) out[0] = 0;
+    DWORD dummy = 0;
+    DWORD size = GetFileVersionInfoSizeW(path, &dummy);
+    if (!size) return;
+    void* buf = malloc(size);
+    if (!buf) return;
+    if (GetFileVersionInfoW(path, 0, size, buf)) {
+        VS_FIXEDFILEINFO* ffi = nullptr;
+        UINT len = 0;
+        if (VerQueryValueW(buf, L"\\", (LPVOID*)&ffi, &len) && ffi) {
+            swprintf(out, cap, L"%u.%u.%u.%u",
+                     HIWORD(ffi->dwFileVersionMS), LOWORD(ffi->dwFileVersionMS),
+                     HIWORD(ffi->dwFileVersionLS), LOWORD(ffi->dwFileVersionLS));
+        }
+    }
+    free(buf);
+}
+
+// Best-effort identification, by path. Never authoritative - reported as a hint.
+static const wchar_t* classify_backend(const wchar_t* path) {
+    if (wcsstr(path, L"vkd3d")) return L"vkd3d-proton (D3D12 -> Vulkan)";
+    if (wcsstr(path, L"wine"))   return L"wine builtin d3d12";
+    if (wcsstr(path, L"System32") || wcsstr(path, L"system32"))
+        return L"Microsoft d3d12 (system)";
+    return L"custom / app-local";
+}
+
+static void log_backend(HMODULE mod) {
+    wchar_t path[MAX_PATH] = L"(unresolved)";
+    GetModuleFileNameW(mod, path, MAX_PATH);
+    wchar_t ver[64];
+    read_file_version(path, ver, 64);
+    g_backend_kind = classify_backend(path);
+    blog("backend: %ls", g_backend_kind);
+    blog("backend: %ls%s%ls", path, ver[0] ? L"  version " : L"", ver);
+
+    wchar_t want[32] = L"";
+    GetEnvironmentVariableW(L"SCARAB_BACKEND", want, 32);
+    if (want[0] && _wcsicmp(want, L"auto") != 0) {
+        const bool isvkd3d = (g_backend_kind[0] == L'v') ;
+        const bool wantvkd3d = (_wcsicmp(want, L"vkd3d") == 0);
+        if (wantvkd3d != isvkd3d)
+            blog("backend: WARNING SCARAB_BACKEND=%ls but the loaded runtime looks like %ls",
+                 want, g_backend_kind);
+    }
+}
+
 // ---------------------- PC D3D12 forward table -----------------------------
 // Resolved lazily from the real PC runtime. We deliberately go through
 // System32\d3d12.dll by *name*: D3D12CreateDevice and friends are plain
@@ -107,11 +181,24 @@ static struct Fwd {
 
     void load() {
         if (dll) return;
-        HMODULE h = LoadLibraryExW(L"d3d12.dll", nullptr,
-                                   LOAD_LIBRARY_SEARCH_SYSTEM32);
+
+        // 1. an explicit runtime wins, which is how vkd3d-proton is selected
+        //    under plain Wine (Proton resolves it without help)
+        wchar_t explicit_path[MAX_PATH] = L"";
+        GetEnvironmentVariableW(L"SCARAB_D3D12_DLL", explicit_path, MAX_PATH);
+        HMODULE h = nullptr;
+        if (explicit_path[0]) {
+            h = LoadLibraryExW(explicit_path, nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
+            blog("backend: SCARAB_D3D12_DLL set to %ls (%s)", explicit_path,
+                 h ? "loaded" : "FAILED to load");
+        }
+        // 2. normal search first, so an app-local runtime or the host's own
+        //    implementation (Wine/Proton) is honoured, then System32
         if (!h) h = LoadLibraryW(L"d3d12.dll");
-        if (!h) { blog("FWD: cannot load PC d3d12.dll (err=%lu)", GetLastError()); return; }
+        if (!h) h = LoadLibraryExW(L"d3d12.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
+        if (!h) { blog("FWD: cannot load a D3D12 runtime (err=%lu)", GetLastError()); return; }
         dll = h;
+        log_backend(h);
         CreateDevice = (PFN_D3D12CreateDevice)GetProcAddress(h, "D3D12CreateDevice");
         GetDebugInterface = (PFN_D3D12GetDebugInterface)GetProcAddress(h, "D3D12GetDebugInterface");
         SerializeRootSignature = (PFN_D3D12SerializeRootSignature)GetProcAddress(h, "D3D12SerializeRootSignature");
@@ -153,8 +240,8 @@ static PFN_wrap_device wrapfn() {
                                    LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
         if (!h) h = LoadLibraryW(L"d3d12_xs_wrap.dll");
         if (h) {
-            g_wrap = (PFN_wrap_device)GetProcAddress(h, "d3d12xs_wrap_device");
-            blog("wrapper layer loaded: d3d12xs_wrap_device=%p", (void*)g_wrap);
+            g_wrap = (PFN_wrap_device)GetProcAddress(h, "scarab_wrap_device");
+            blog("wrapper layer loaded: scarab_wrap_device=%p", (void*)g_wrap);
         } else {
             blog("wrapper layer absent (d3d12_xs_wrap.dll); devices go out unwrapped, "
                  "console extension calls will not be served");
