@@ -7,6 +7,8 @@ the upstream shader recompiler core/shader/recompiler/RdnaDecoder/src/RdnaInstru
 
 Stdlib only.
 """
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Pedro Portela
 
 # (word >> 26) -> family, for the "top bits != 00/10" space
 _SW26 = {

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Pedro Portela
 <#
 .SYNOPSIS
   Link the artefacts SCARAB builds against and analyses.

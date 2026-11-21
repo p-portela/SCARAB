@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 Pedro Portela
 // ===========================================================================
 //  shader_bridge.h -- seam between the D3D12 bridge and the shader pipeline
 // ===========================================================================

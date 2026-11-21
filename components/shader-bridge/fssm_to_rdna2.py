@@ -37,6 +37,8 @@ Verified container layout (observed, the target title 1.0.2.1 Scarlett):
 Usage:
     python3 fssm_to_rdna2.py <file.dxbc|shaders.rpf> <outdir> [--limit N]
 """
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Pedro Portela
 import os
 import re
 import sys

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Pedro Portela
 # shader-bridge: the FSSM -> RDNA2 -> DXIL pipeline.
 #
 # See docs/ROADMAP.md section 0 for why the target is DXIL (LLVM bitcode, shader

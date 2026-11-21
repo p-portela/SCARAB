@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 Pedro Portela
 // integration_test.cpp -- end-to-end proof of the bridge + wrapper layer.
 //
 //   this exe (title side)

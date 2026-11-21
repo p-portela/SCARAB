@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 Pedro Portela
 // generated from the genuine console d3d12_xs.dll export table
 // GUID data exports, byte-for-byte identical to the shipped runtime
 #include <windows.h>

@@ -145,5 +145,11 @@ docs/                          architecture, findings, provenance
 
 ## Licence
 
-MIT for the code in this repository; see [LICENSE](LICENSE). No third-party binaries are
-redistributed.
+GNU General Public License v3.0 — see [LICENSE](LICENSE). Copyright (C) 2026 Pedro
+Portela. Every first-party file is `GPL-3.0-only` (SPDX headers); the one exception is
+`components/shader-bridge/third_party/dxc/dxcapi.h`, which keeps Microsoft's own
+University of Illinois Open Source licence.
+
+No third-party binaries and no game content are redistributed by this repository; see
+[docs/PROVENANCE.md](docs/PROVENANCE.md). Third-party names are used descriptively, see
+[NOTICE.md](NOTICE.md).

@@ -3,6 +3,8 @@
 
 No external deps. Used to compare console/PC D3D12 and console shader-toolchain DLLs.
 """
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Pedro Portela
 import struct, sys, json, re
 
 

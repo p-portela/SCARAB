@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 Pedro Portela
 // dxc_emit_test.cpp -- can SCARAB produce DXIL locally?
 //
 // The shader bridge needs an emitter. Writing a DXIL backend means generating

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Pedro Portela
 # Run every verification gate.
 #
 # The gates themselves live in tests/CMakeLists.txt, so the commands are identical

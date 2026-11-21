@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 Pedro Portela
 // guid_defs.cpp -- provide storage for the D3D12/DXGI interface IIDs.
 // d3d12.h only *declares* the IID_* GUIDs; one translation unit must define them.
 // INITGUID does that. Kept in its own file so the definitions are not duplicated

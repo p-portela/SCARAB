@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Pedro Portela
 # The verification gates, registered with CTest so the command is identical on
 # every host:
 #

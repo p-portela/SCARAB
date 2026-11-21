@@ -95,7 +95,7 @@ scarab/
   CMakeLists.txt                  top-level; drives both components
   cmake/toolchain-mingw.cmake     Linux -> x86_64-w64-windows-gnu (LLVM-mingw)
   README.md                       what this is, how to build, how to test
-  LICENSE                         MIT for our code
+  LICENSE                         GPL-3.0-only for our code
   .gitignore                      vendor/ corpora/ artifacts are NEVER committed
   components/
     runtime-bridge/               (was artifacts/bridge)   d3d12_xs.dll
@@ -175,7 +175,7 @@ Bite-sized, in order. Each ends with a commit.
 ### Task 1: scaffold the repo
 - Create `~/Documents/scarab` with `git init`, `.gitignore`
   (`vendor/`, `corpora/`, `build/`, `*.log`, `*.exe`, `*.dll`, `__pycache__/`),
-  `LICENSE` (MIT), directory skeleton.
+  `LICENSE` (GPL-3.0-only), directory skeleton.
 - Verify: `git status` shows only `.gitignore`/`LICENSE` as untracked.
 
 ### Task 2: move the components

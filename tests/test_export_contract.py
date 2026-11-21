@@ -9,6 +9,8 @@ ordinal, or a wrong GUID byte, fails here.
 Run standalone:
     python3 tests/test_export_contract.py [built.dll] [reference.dll]
 """
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Pedro Portela
 import os
 import subprocess
 import sys

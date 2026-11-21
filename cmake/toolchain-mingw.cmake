@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Pedro Portela
 # Cross-compile for 64-bit Windows from a Linux host.
 #
 # Uses LLVM-mingw (clang + lld targeting x86_64-w64-windows-gnu), which is a

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 Pedro Portela
 // ===========================================================================
 //  memory_adapter.h -- console resource/heap semantics onto PC D3D12
 // ===========================================================================

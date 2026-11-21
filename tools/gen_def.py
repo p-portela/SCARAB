@@ -25,6 +25,8 @@ rather than producing a .def that exports the wrong names.
 
 Usage: gen_def.py <reference.dll> <shared-reference.dll> <out.def> [out.csv]
 """
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Pedro Portela
 import os
 import re
 import sys

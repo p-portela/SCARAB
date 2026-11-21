@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 Pedro Portela
 // ===========================================================================
 //  console_extensions.h -- the recovered console (Scarlett) D3D12 extension ABI
 // ===========================================================================

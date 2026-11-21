@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 Pedro Portela
 // selftest_main.cpp -- runs the wrapper layer's own logic with no GPU and no
 // device object, so the QI routing, refcounting, validation and unknown-slot
 // logging can be verified on any machine (including under Wine on Linux).

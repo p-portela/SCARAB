@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 Pedro Portela
 // peload.exe -- load a PE library under Wine and resolve every export.
 //
 // Independent cross-check of tools/peinfo.py: this enumerates the export

@@ -15,6 +15,8 @@ Usage:
 Writing to a file with -o rather than relying on shell redirection keeps the
 build step portable: `>` is a shell feature and does not exist in cmd.exe.
 """
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Pedro Portela
 import re, sys, os
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

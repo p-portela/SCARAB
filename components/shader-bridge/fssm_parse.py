@@ -33,6 +33,8 @@ Measured layout (offsets are byte offsets from the start of the FSSM blob):
 
 Stdlib only.
 """
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Pedro Portela
 import os
 import struct
 import sys

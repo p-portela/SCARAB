@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 Pedro Portela
 // ===========================================================================
 //  wrap.cpp -- wrapper layer: owns the console (Scarlett) D3D12 extension surface
 //              and forwards the PC surface to a real PC D3D12 object.

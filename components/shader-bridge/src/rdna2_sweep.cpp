@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 Pedro Portela
 // rdna2_sweep.cpp
 //
 // Diagnostic for: why does the upstream shader recompiler's decoder reject the target title's RDNA2 streams?

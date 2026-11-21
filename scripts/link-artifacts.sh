@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Pedro Portela
 # Link the artefacts this project builds against and analyses.
 #
 # The repository never contains Microsoft's binaries or the publisher's game data, so

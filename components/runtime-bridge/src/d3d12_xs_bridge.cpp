@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 Pedro Portela
 // ---------------------------------------------------------------------------
 // d3d12_xs.dll  --  console (Scarlett) D3D12 runtime  ->  Windows D3D12 bridge
 // ---------------------------------------------------------------------------

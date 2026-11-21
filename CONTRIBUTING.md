@@ -85,6 +85,13 @@ to one jumped into garbage (execute-access violation under Wine).
 Now queries the highest supported version and refuses to wrap below 4.
 ```
 
+## Licence
+
+This project is GPL-3.0-only (see `LICENSE`). By contributing you agree your
+contribution is licensed under the same terms, and that you have the right to submit it.
+Do not paste code from a source whose licence is incompatible with the GPL, and do not
+commit third-party binaries or game content (see `docs/PROVENANCE.md`).
+
 ## Reporting a finding
 
 If you recover something — a method's true order, an IID, a signature — record it where

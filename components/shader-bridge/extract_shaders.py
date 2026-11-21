@@ -31,6 +31,8 @@ Format (verified against the target title 1.0.2.1 Scarlett, shaders.rpf 411,695,
 
 Usage:  python3 extract_shaders.py shaders.rpf outdir
 """
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Pedro Portela
 import os, re, sys, zlib, csv, hashlib, struct, collections
 
 NAME_RE = re.compile(rb"[A-Za-z][A-Za-z0-9_]{5,90}_Wrapped")

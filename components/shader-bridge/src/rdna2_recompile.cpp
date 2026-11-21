@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 Pedro Portela
 // rdna2_recompile.cpp
 //
 // Bridge tool: takes a raw RDNA2 word stream (produced by

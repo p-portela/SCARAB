@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 Pedro Portela
 // generated from the genuine console runtime (vendor/x64_dx12/d3d12_xs.dll)
 // IID_* data exports that are NOT defined in the PC headers we hold, i.e. the
 // console-specific interfaces. PROVENANCE: proven - exported at these ordinals.

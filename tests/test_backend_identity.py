@@ -17,6 +17,8 @@ Usage: test_backend_identity.py [launcher] <integration_test.exe>
   launcher is SCARAB_TEST_LAUNCHER (empty on Windows, "wine" elsewhere), which
   is also how the host is inferred.
 """
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Pedro Portela
 import os
 import pathlib
 import re

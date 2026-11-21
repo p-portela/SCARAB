@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Pedro Portela
 # runtime-bridge: d3d12_xs.dll
 #
 # A drop-in replacement for the console D3D12 runtime's 116 exports. It forwards

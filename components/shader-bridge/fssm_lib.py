@@ -18,6 +18,8 @@ DXIL chunk body (a second-level DXIL container):
   ...  'XBCH'  compressed shader (this module extracts this)
   ...  'DXIL' / 'NOBC' trailing container
 """
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Pedro Portela
 import struct, zlib
 
 

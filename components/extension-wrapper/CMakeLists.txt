@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Pedro Portela
 # extension-wrapper: d3d12_xs_wrap.dll
 #
 # Owns the console (Scarlett) extension surface: the X-suffixed methods the console

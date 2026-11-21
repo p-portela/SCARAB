@@ -9,6 +9,8 @@ the wrapper's QI routing is built on.
 Runs with pytest if available, otherwise standalone:
     python3 tests/test_tools.py
 """
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Pedro Portela
 import os
 import re
 import struct

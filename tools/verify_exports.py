@@ -12,6 +12,8 @@ Checks, in order of importance:
 Exits non-zero on any mismatch. Usage:
     tools/verify_exports.py <built.dll> [reference.dll]
 """
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Pedro Portela
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from peinfo import PE

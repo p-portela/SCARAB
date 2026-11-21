@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Pedro Portela
 # scarab-platform.cmake -- platform and toolchain abstraction.
 #
 # SCARAB targets two host environments and must build on both:

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 Pedro Portela
 cmake_minimum_required(VERSION 3.20)
 project(SCARAB LANGUAGES C CXX)
 
