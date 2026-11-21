@@ -24,14 +24,14 @@ That boundary has two halves, and they cost very different amounts:
   a console-only command-list type, console memory semantics, and console presentation.
 
 Shaders are a third axis entirely: the console gives the driver pre-compiled RDNA2
-microcode, and PC drivers accept DXIL or SPIR-V.
+microcode, and PC drivers accept DXIL.
 
 ## 2. Layers
 
 ```
   L4  diagnostics        structured logs, QI audit, appended-slot log, UMD/IOCTL trace
       ------------------ seam: structured event log -------------------------------
-  L3  shader pipeline    FSSM -> RDNA2 -> IR -> SPIR-V/DXIL
+  L3  shader pipeline    FSSM -> RDNA2 -> IR -> DXIL
                          + root-signature -> binding synthesis (SRT/BDA)
                          + cooked-PSO (XBSC serialize/deserialize) translation
       ------------------ seam: D3D12UploadCustomMicrocodeX / PSO creation ---------
@@ -81,10 +81,8 @@ Two consequences worth stating:
 
 - **DXVK is not the Linux answer.** DXVK covers D3D9/10/11; D3D12 on Vulkan is
   vkd3d-proton. Getting this wrong would send the Linux path down a dead end.
-- **L3's output target should be DXIL, not SPIR-V.** vkd3d-proton consumes DXIL, and so
-  does Microsoft's runtime, so DXIL is the one target that serves both backends. Emitting
-  SPIR-V (which the upstream shader recompiler already does) would be a Linux-only fast path, useful as a
-  cross-check but not the primary.
+- **L3's output target should be DXIL.** vkd3d-proton consumes DXIL, and so
+  does Microsoft's runtime, so DXIL is the one target that serves both backends.
 
 ## 3. Components
 
@@ -92,7 +90,7 @@ Two consequences worth stating:
 |---|---|---|---|
 | `runtime-bridge` | `d3d12_xs.dll` | the console runtime's 116 exports; forward the standard API, emulate the console-only free functions | built; contract byte-exact; runs under Wine |
 | `extension-wrapper` | `d3d12_xs_wrap.dll` | appended `X` methods, console command-list types/IIDs, `CreateCommandList` interception, QI audit | built; self-test 19/19; integrated end-to-end |
-| `shader-bridge` | (library + tooling) | FSSM → RDNA2 → **DXIL** (the target both backends accept); SPIR-V as a Linux-only cross-check; root-signature → bindings | extraction done for all 25,321 shaders; recompiler in progress |
+| `shader-bridge` | (library + tooling) | FSSM → RDNA2 → **DXIL** (the target both backends accept); root-signature → bindings | extraction done for all 25,321 shaders; recompiler in progress |
 | `memory-adapter` | (library) | console resource/heap flags, DCC and HTILE compression, tiling → PC heaps | seam only |
 | `present-adapter` | (library) | `DXGIXPresentArray`, vblank/frame notifications → PC DXGI | seam only |
 

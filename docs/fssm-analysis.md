@@ -108,24 +108,23 @@ multi-region container will mislead.
 - The shipped shaders are **console GPU machine code**. There is no DXIL and no
   re-containerising shortcut.
 - A PC rendering path therefore needs one of:
-  1. an **RDNA2 ISA → SPIR-V (or DXIL) shader translator**, or
+  1. an **RDNA2 ISA → DXIL shader translator**, or
   2. the game's own runtime shader compiler, which is almost certainly in the title exe.
 - Option 1 is buildable and **testable offline**, against the 25,889-shader corpus we
   already hold, with the reflection metadata (`ISG1`/`OSG1`/`PSV0`/`SFI0`, plus the
   `interface.csv` manifest) supplying the interface contract. So shaders are not strictly
   exe-gated — but this is a substantial component, not a formatting problem.
 - Mitigating fact: RDNA2 is the same ISA family as PC RDNA2 GPUs, so the ISA itself is not
-  exotic. It still has to be translated, because D3D12 and Vulkan consume DXIL and SPIR-V
-  respectively, not raw ISA.
+  exotic. It still has to be translated, because D3D12 consumes DXIL, not raw ISA.
 - Known precedent to study: shader-ISA translation is what PS3/X360-era translation layers
-  did, and AMD's own RGA plus the the upstream shader recompiler `RdnaDecoder` already give partial disassembly.
+  did, and AMD's own RGA plus the upstream shader recompiler `RdnaDecoder` already give partial disassembly.
 
 ## Counter-evidence (strongest against the verdict)
 
 - The walker uses documented base instruction lengths and does **not** apply +1-dword
   literal operands, so ~3/12,789 branch targets miss — consistent with drift where a
   literal is parsed as an opcode. Exact disassembly needs the literal-operand rules from
-  the the upstream shader recompiler decoders, not just the classifier.
+  the upstream shader recompiler decoders, not just the classifier.
 - Corpus entropy really is low compared with textbook machine code; the explanation given
   here (filler domination) is plausible and partly demonstrated, not fully proven.
 - Everything above establishes "AMD ISA". The step to "RDNA2 specifically" rests on the
@@ -133,9 +132,9 @@ multi-region container will mislead.
 
 ## Next step
 
-Feed the literal-operand rules from the upstream shader recompiler's decoder into the walker to get a full, clean
+Feed the literal-operand rules from the upstream recompiler's decoder into the walker to get a full, clean
 disassembly of one small shader and one large CS, then assess how tractable an
-ISA → SPIR-V translation actually is on a real sample.
+ISA → DXIL translation actually is on a real sample.
 
 ## Artifacts
 

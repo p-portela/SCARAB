@@ -89,7 +89,6 @@ Exit criteria
    out, verified part-by-part (extend G6 from "emitter works" to "our IR round-trips").
 4. `D3D12UploadCustomMicrocodeX` wired to that chain, with the console microcode path
    exercised by a test.
-5. SPIR-V cross-check on Linux only, not on the critical path.
 
 ## v0.5.0 — Presentation and memory
 

@@ -2,7 +2,7 @@
 
 The console feeds the driver pre-compiled **RDNA2/gfx10 machine code** wrapped in an FSSM
 container (itself zlib-compressed in an XBCH stream inside an XDAT container that sits
-inside a DXIL-shaped outer container). PC drivers accept DXIL, or SPIR-V under Vulkan.
+inside a DXIL-shaped outer container). PC drivers accept DXIL, never microcode.
 This component is that translation.
 
 ```
@@ -11,10 +11,9 @@ FSSM blob -> raw RDNA2 stream      fssm_to_rdna2.py                         done
           -> PC shader blob        include/shader_bridge.h                  this seam
 ```
 
-**The target is DXIL, not SPIR-V.** vkd3d-proton consumes DXIL and so does Microsoft's
+**The target is DXIL.** vkd3d-proton consumes DXIL and so does Microsoft's
 D3D12 runtime, so DXIL is the one output that serves both backends — and Windows is the
-primary target. the upstream shader recompiler already emits SPIR-V; that is worth keeping as a Linux-only
-cross-check, but making it primary would lock this component to the Linux path.
+primary target.
 
 ## Contents
 
@@ -25,7 +24,7 @@ cross-check, but making it primary would lock this component to the Linux path.
 | `fssm_to_rdna2.py` | the extractor: FSSM → raw instruction streams + index |
 | `extract_shaders.py` | splits an RPF shader library into per-shader files |
 | `rdna2_classify.py` | corpus-wide classification of the extracted streams |
-| `src/rdna2_recompile.cpp` | drives the upstream shader recompiler's recompiler on a raw stream |
+| `src/rdna2_recompile.cpp` | drives the upstream recompiler's recompiler on a raw stream |
 | `src/rdna2_sweep.cpp` | walks the instruction stream to locate the first decoder rejection |
 | `include/shader_bridge.h` | the interface the runtime-bridge calls from `D3D12UploadCustomMicrocodeX` |
 

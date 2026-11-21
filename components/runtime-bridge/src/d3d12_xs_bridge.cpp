@@ -496,13 +496,13 @@ extern "C" HRESULT WINAPI D3D12ConfigureVirtualMemoryX() {
 // This is where the console runtime hands pre-compiled *GPU microcode* to the
 // driver. On Scarlett that microcode is the FSSM container holding AMD RDNA2 /
 // gfx10 machine code (see docs/fssm-analysis.md). The PC runtime and the PC
-// vendor UMD accept DXIL (or SPIR-V under Vulkan), never microcode.
+// vendor UMD accept DXIL, never microcode.
 //
 // Therefore this single export is the API-level face of the whole shader
 // translation problem:
 //
 //     FSSM blob  ->  raw RDNA2 stream      (tools/fssm_to_rdna2.py, done)
-//                ->  SPIR-V / DXIL         (the upstream shader recompiler recompiler, in progress)
+//                ->  DXIL         (the upstream shader recompiler, in progress)
 //                ->  PC PSO / shader blob  (this hook)
 //
 // Until that chain is complete the hook fails loudly rather than silently
@@ -511,7 +511,7 @@ extern "C" HRESULT WINAPI D3D12UploadCustomMicrocodeX() {
     static volatile LONG warned = 0;
     if (InterlockedCompareExchange(&warned, 1, 0) == 0) {
         blog("D3D12UploadCustomMicrocodeX: console microcode upload is NOT translatable yet.");
-        blog("  chain: FSSM -> RDNA2 -> SPIR-V/DXIL. See the shader-target notes");
+        blog("  chain: FSSM -> RDNA2 -> DXIL. See the shader-target notes");
     }
     return E_NOTIMPL;  // deliberate: fail loudly, do not pretend
 }

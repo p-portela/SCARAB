@@ -216,10 +216,10 @@ model is not** (PS5 SRT-in-guest-memory vs D3D12 descriptor-heap-offset-in-root-
   (<https://www.techpowerup.com/gpu-specs/console-series-x-gpu.c3482>,
   <https://www.techpowerup.com/gpu-specs/amd-lockhart.g970>). Console GPU codenames are
   `Scarlett` = Series X|S, `Durango` = console One.
-- **PS5** GPU is `gfx1013` (`Oberon`) — the upstream shader recompiler's own progress page states "The PS5 uses gfx1013, but
+- **PS5** GPU is `gfx1013` (`Oberon`) — the upstream recompiler's own progress page states "The PS5 uses gfx1013, but
   this public-source profile is not a complete console ISA or hardware verification"
   (<https://boykopovar.github.io/the upstream shader recompiler/progress.html>).
-- **The machine code is the gfx10 family.** the upstream shader recompiler's decoder and our own the target title classifier dispatch
+- **The machine code is the gfx10 family.** the upstream recompiler's decoder and our own the target title classifier dispatch
   on the first dword; the VOP3 discriminator is `0x35 << 26` (0xD4–0xD7) on **gfx10**, whereas gfx9
   uses `0x34` (0xD0–0xD3). the target title's FSSM code uses 0xD4/0xD5/0xD7 → gfx10 family
   (`docs/fssm-analysis.md`; skill reference `reverse-engineering/console-gdk-reversing`,
@@ -316,10 +316,10 @@ model is not** (PS5 SRT-in-guest-memory vs D3D12 descriptor-heap-offset-in-root-
 | **LLVM AMDGPU backend** (<https://llvm.org/docs/AMDGPUUsage.html>) | amdgcn code generation **and** a working amdgcn disassembler (`llvm-objdump -d --triple=amdgcn...`); the **AMDPAL User Data** documentation (Q1/A1) | The ABI model doc + an independent ISA disassembler for differential testing | **Apache-2.0 WITH LLVM-exception / UIUC-NCSA** (fetched `LICENSE.TXT`: "University of Illinois/NCSA Open Source License") |
 | **Mesa** (RADV / ACO / NIR) (<https://docs.mesa3d.org/drivers/radv.html>) | RADV: SPIR-V→NIR→ACO→GCN/RDNA ISA; `ac_shader_args` documents the **Vulkan user-SGPR ABI** (descriptor sets, push constants) | Reference for the *Vulkan* user-SGPR layout (a third ABI to triangulate PS5 vs D3D12), and for descriptor→SRD handling | **MIT** (Mesa `COPYING`; the GitLab raw endpoint served an anti-bot page so this is cited from Mesa's published licensing `[UNVERIFIED exact file text]`) |
 | **SPIRV-Cross** (<https://github.com/KhronosGroup/SPIRV-Cross>) | SPIR-V → GLSL/HLSL/MSL | Emit HLSL (DXC) or MSL from our SPIR-V if the target is not Vulkan | **Apache-2.0** (fetched `LICENSE`: "Apache License Version 2.0") |
-| **SPIRV-Tools / spirv-dis** (Khronos) | SPIR-V binary ⇄ text, validation | Disassemble/validate the upstream shader recompiler's emitted SPIR-V (the upstream shader recompiler's build here has `SHADER_RECOMP_ENABLE_SPIRV_TOOLS=OFF`) | Apache-2.0 |
+| **SPIRV-Tools / spirv-dis** (Khronos) | SPIR-V binary ⇄ text, validation | Disassemble/validate the upstream recompiler's emitted SPIR-V (the upstream recompiler's build here has `SPIRV_TOOLS=OFF`) | Apache-2.0 |
 | **Xenia** (<https://github.com/xenia-project/xenia>) | console 360 (Xenos, *not* GCN) emulator with a shader translator and `docs/gpu.md` | Architectural precedent for translating a *console-specific* GPU ISA to a PC-targeted shader IR | **BSD-3-Clause** (fetched `LICENSE`: "Copyright (c) 2015, Ben Vanik. All rights reserved." + 3-clause text) |
 | **XenosRecomp** (<https://github.com/hedge-dev/XenosRecomp>) | console 360 Xenos shader container → HLSL recompiler (powers Unleashed Recompiled) | Nearest precedent for **recompiling a console shader container into a PC shader**; not GCN | **MIT** (fetched `LICENSE.md`: "MIT License, Copyright (c) 2025 hedge-dev and contributors") |
-| **vkd3d-proton** (<https://github.com/HansKristian-Work/vkd3d-proton>) | D3D12 → Vulkan; DXBC/DXIL → SPIR-V, and the canonical **root-signature/descriptor-heap → Vulkan descriptor** mapping | The reference for mapping D3D12 binding semantics (root sig, heaps, CBV/SRV/UAV/sampler) onto a Vulkan/SPIR-V model — i.e. the bridge we need between the console descriptor world and the upstream shader recompiler's `RuntimeAbi` | **LGPL-2.1** (fetched `LICENSE`: "GNU LESSER GENERAL PUBLIC LICENSE Version 2.1") — copyleft |
+| **vkd3d-proton** (<https://github.com/HansKristian-Work/vkd3d-proton>) | D3D12 → Vulkan; DXBC/DXIL → SPIR-V, and the canonical **root-signature/descriptor-heap → Vulkan descriptor** mapping | The reference for mapping D3D12 binding semantics (root sig, heaps, CBV/SRV/UAV/sampler) onto a Vulkan/SPIR-V model — i.e. the bridge we need between the console descriptor world and the upstream recompiler's `RuntimeAbi` | **LGPL-2.1** (fetched `LICENSE`: "GNU LESSER GENERAL PUBLIC LICENSE Version 2.1") — copyleft |
 | **dxil-spirv** (<https://github.com/HansKristian-Work/dxil-spirv>) | DXIL → SPIR-V (used by vkd3d-proton) | Only if we later want a DXIL path; DXIL appears absent from the target title, so not on the critical path | `[UNVERIFIED]` (license file not found at the guessed path; commonly MIT) |
 | **AMD machine-readable ISA XML** (`amdgpu_isa_rdna2.xml`), mirrored locally | Authoritative instruction-form tables | Already used by the upstream shader recompiler (`tools/rdna2_isa_forms.txt`); extend to full gfx10.3 forms | AMD-published (permissive; see GPUOpen) |
 | **UMR (AMD User Mode Register debugger)** (`AMDGPU/umr`) | Dumps GPU registers/waves/microcode | Could capture live user-SGPR values to validate an console/PC ABI hypothesis | `[UNVERIFIED]` (license file not found at the guessed path) |
@@ -354,7 +354,7 @@ gap. (1)–(4) are the core; this extends the PS5-side plan already in
    (b) the FSSM binding table, and (c) validated assumptions about the D3D12 user-SGPR layout.**
 
 3. **D3D12 → the upstream shader recompiler `RuntimeAbi` descriptor bridge.**
-   Map D3D12 root-signature/descriptor-heap semantics onto the upstream shader recompiler's `Binding::{Buffers, Samplers,
+   Map D3D12 root-signature/descriptor-heap semantics onto the upstream recompiler's `Binding::{Buffers, Samplers,
    FlattenedSrt, ImageTable, ImageTableMap, SamplerTable, BdaPagetable}` model: turn D3D12
    CBV/SRV/UAV descriptors into V#/T# words and samplers into S# words, place them in the region
    `userData` points at, and set the image/sampler tables. Model descriptor tables as heap
@@ -366,7 +366,7 @@ gap. (1)–(4) are the core; this extends the PS5-side plan already in
    delivery away from PS5's push-constant layout (`MeshDrawPushOffsetBytes`, `MeshArgumentAddressDword`)
    to the D3D12 model: root signature + `DispatchMesh` payload passed through LDS and read via
    `GetMeshPayload()`. The ISA side (LDS payload, `s_barrier`/`s_sendmsg`) is already exercised by
-   the upstream shader recompiler's mesh path; the *binding/argument* plumbing is what must change.
+   the upstream recompiler's mesh path; the *binding/argument* plumbing is what must change.
 
 5. **Extend the gfx1013 decoder to full gfx10.3 / RDNA2 forms.**
    Scarlett is "full RDNA2"; the upstream shader recompiler targets gfx1013. Diff the local
@@ -385,14 +385,13 @@ gap. (1)–(4) are the core; this extends the PS5-side plan already in
    `target.subgroupSize`; note the upstream shader recompiler throws on `wave64 + sharedVgprBlocks != 0`.
 
 8. **Differential disassembly harness (the cheapest decisive experiment).**
-   Disassemble N sampled the target title blobs with **both** the upstream shader recompiler's `RdnaInstructionDecoder` and **AMD RGA**
+   Disassemble N sampled the target title blobs with **both** the upstream recompiler's `RdnaInstructionDecoder` and **AMD RGA**
    (or `llvm-objdump --triple=amdgcn`), and diff. Any opcode RGA decodes but the upstream shader recompiler cannot is a
    concrete decoder gap; a byte-for-byte agreement on a large sample is strong evidence the console ISA
    is within the shared gfx10 encoding. No title exe needed.
 
-9. **Decide the output target.**
-   SPIR-V (Vulkan) works today. If the target is D3D12-on-PC, emit DXIL via **DXC** instead (or go
-   SPIR-V → HLSL via SPIRV-Cross → DXC). This changes the back end, not the front end.
+9. **Decide the output target.** The target is DXIL: emit it via **DXC**. This changes
+   the back end, not the front end.
 
 10. **The two genuinely gated unknowns, stated once:**
     (a) the exact **console D3D12 user-SGPR base/count per stage** — public docs are NDA-gated, so it

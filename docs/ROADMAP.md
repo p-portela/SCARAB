@@ -9,8 +9,8 @@ finished milestone.
 ## 0. The bytecode decision (settled, with evidence)
 
 **Target: DXIL — LLVM bitcode, shader model 6.x — carried in a `DXBC` container.**
-Produced by DXC from HLSL that we emit. Not SPIR-V, not DXBC bytecode, not
-hand-written LLVM bitcode.
+Produced by DXC from HLSL that we emit — not DXBC bytecode, not hand-written LLVM
+bitcode.
 
 ### Why, measured rather than assumed
 
@@ -39,21 +39,15 @@ replaced by microcode. Three consequences:
    produced `ISG1`/`OSG1` against the console shader's. If they match, the shader's
    interface is provably right without ever running the title. See §1 Phase 2.
 
-### Why not SPIR-V
+### Why DXIL
 
-SPIR-V is the IR of a *different API* (Vulkan), consumed by Vulkan drivers — it sits
-one layer **below** the boundary SCARAB works at. To use it we would have to
-implement the entire D3D12 API on Vulkan ourselves, i.e. rebuild vkd3d-proton, and
-throw away the API forwarding that currently works for free because the COM
-interfaces are identical. Meanwhile DXIL is what *both* backends consume:
+DXIL is what *both* backends consume, so it is the one output that serves them without
+this layer having to reimplement anything:
 
 | backend | consumes | then |
 |---|---|---|
 | Microsoft D3D12 (Windows) | DXIL | vendor UMD compiles to hardware |
-| vkd3d-proton (Linux) | DXIL | dxil-spirv compiles to SPIR-V → Vulkan |
-
-SPIR-V stays useful as a **Linux-only cross-check** (the upstream shader recompiler already emits it), not
-as the target.
+| vkd3d-proton (Linux) | DXIL | compiled for Vulkan |
 
 ### Why HLSL and not an LLVM bitcode backend
 
@@ -90,7 +84,7 @@ The goal is not coverage, it is to close the loop once, on the simplest shader i
 the corpus, so that everything after it is repetition.
 
 1. **Pick the target**: `VS_Passthrough_*` — no resources, no samplers, minimal ISA.
-2. **RDNA2 → IR**: run the upstream shader recompiler's decoder front-end on its stream. Blocked today by the
+2. **RDNA2 → IR**: run the upstream recompiler's decoder front-end on its stream. Blocked today by the
    sweep; first work item is the alignment hypothesis (`docs/isa/shader-isa-notes.md`
    §3–4), then the vendor disassembler as an oracle (`xbsc_xs.dll`, loads under Wine).
 3. **IR → HLSL**: emit a trivial, correct, ugly shader. Correctness over beauty.

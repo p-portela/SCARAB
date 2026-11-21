@@ -104,7 +104,7 @@ is needed in the sources. Gate G1 checks the result against that same artifact.
 | 14,15,16,17 | `D3D12Cons{EnableMemoryProfiling,Get,Set}ProcessDebugFlags`, `D3D12ConsUnloadDriverModule` | **recorded**, no PC equivalent |
 | 13 | `D3D12ConsCreateDevice` | forward as a PC device; console creation parameters logged, not honoured |
 | 4 | `D3D12ConfigureVirtualMemoryX` | recorded; PC driver owns VM policy |
-| **12** | **`D3D12UploadCustomMicrocodeX`** | **the shader seam** — fails loudly (`E_NOTIMPL`) until FSSM→SPIR-V/DXIL exists |
+| **12** | **`D3D12UploadCustomMicrocodeX`** | **the shader seam** — fails loudly (`E_NOTIMPL`) until FSSM→DXIL exists |
 | 19,20,21,22 | `DXGIX{GetFrameStatistics,PresentArray,SetFrameNotification,SetVLineNotification}` | emulated; PC has no present-array / vblank-notification model |
 | 2 | `PixGetPixieEntryPoints` | `E_NOTIMPL` |
 | 116 | `InternalDriverCallX` | `E_NOTIMPL`, counted. Private runtime↔UMD channel; nothing to forward to |
@@ -267,8 +267,8 @@ and cannot drift from the PC ABI at compile time.
    `IID_ID3D12ConsDmaCommandList` and `IID_ID3D12GraphicsCommandList`.
 2. Place the remaining ~95 recovered console methods and confirm the appended
    block's real order — needs the QI/slot log from a running title.
-3. Point `D3D12UploadCustomMicrocodeX` at the real FSSM→RDNA2→SPIR-V chain once
-   the the upstream shader recompiler decoder sweep is clean.
+3. Point `D3D12UploadCustomMicrocodeX` at the real FSSM→RDNA2→DXIL chain once
+   the upstream shader recompiler decoder sweep is clean.
 4. Recover the true signatures of the unknown-arity exports from the title exe —
    blocked on the exe, which is absent from the rip by design.
 5. Execute the bridge on a Windows host with a title that exercises it.

@@ -6,18 +6,16 @@
 // On Scarlett the title hands pre-compiled *GPU microcode* to the driver through
 // D3D12UploadCustomMicrocodeX. That microcode is the FSSM container holding AMD
 // RDNA2 / gfx10 machine code. The PC runtime and the PC vendor UMD accept DXIL
-// (or SPIR-V under Vulkan) and never microcode, so this is the API-level face of
+// and never microcode, so this is the API-level face of
 // the whole shader translation problem:
 //
 //     FSSM blob  ->  raw RDNA2 stream      components/shader-bridge/fssm_to_rdna2.py   [done]
-//                ->  DXIL                  the upstream shader recompiler's RDNA2 front-end + a DXIL emitter [in progress]
+//                ->  DXIL                  the upstream recompiler's RDNA2 front-end + a DXIL emitter [in progress]
 //                ->  PC shader blob        this seam                                 [this header]
 //
-// TARGET IS DXIL, NOT SPIR-V. vkd3d-proton consumes DXIL, and so does Microsoft's
-// D3D12 runtime, so DXIL is the one output that serves both backends (Windows is
-// the primary target, Linux via vkd3d-proton the secondary). the upstream shader recompiler already emits
-// SPIR-V; that is useful as a Linux-only cross-check, but making it the primary
-// target would lock the shader work to the Linux path.
+// TARGET IS DXIL. vkd3d-proton consumes DXIL, and so does Microsoft's D3D12
+// runtime, so DXIL is the one output that serves both backends (Windows is the
+// primary target, Linux via vkd3d-proton the secondary).
 //
 // STATUS: extraction is done and the RDNA2 stream is available for all 25,321
 // shaders. Recompilation is blocked on decoder coverage and on a missing

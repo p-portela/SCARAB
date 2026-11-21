@@ -2,7 +2,7 @@
 
 **Scope.** What is publicly documented about the shader *container* formats of RAGE-engine titles (pre-Gen8 RAGE title,
 a racing title on the same engine, a western RAGE title, a linear-shooter RAGE title, Gen8 RAGE title, current-Gen RAGE title), the tools that read/write them, and
-whether the the target title (Scarlett) `FSSM` container (version `0x101`) plausibly belongs to that family.
+whether the target title (Scarlett) `FSSM` container (version `0x101`) plausibly belongs to that family.
 
 **Method.** Web search for discovery; pages fetched with `curl -sL -A 'Mozilla/5.0'`; GitHub trees/blobs read
 from `api.github.com` and `raw.githubusercontent.com`; two repos downloaded as tarballs and grepped locally.
@@ -238,7 +238,7 @@ They parse **standard Microsoft bytecode**, never the publisher bytecode. The ti
 
 The stage/model for Gen8 RAGE title blobs is read straight out of the Microsoft chunk (`SHEX`/`SHDR`/`DXIL`), and the
 "decompiler artifacts" the shadermanager warns about are D3D decompiler artifacts, not RAGE ones
-(a public third-party shader-manager tool). So: **the bytecode layer is DXBC/DXIL; the the publisher layer is the
+(a public third-party shader-manager tool). So: **the bytecode layer is DXBC/DXIL; the publisher layer is the
 wrapper and the effect metadata.**
 
 ---
@@ -264,7 +264,7 @@ Arguments **for** family membership (weak-to-moderate):
 Arguments **against** a direct `rgxe`/`SGD2` descent (the decisive one):
 
 4. **The nesting is inverted.** Every documented RAGE container (`rgxe`, `rgxa`, `SGD2`) sits **outside** the
-   Microsoft bytecode — the DXBC/DXIL blob is an opaque payload field *inside* the the publisher container. In the the target title
+   Microsoft bytecode — the DXBC/DXIL blob is an opaque payload field *inside* the publisher container. In the target title
    description, `FSSM` is reported as being **inside** a DXBC-shaped container (whose chunk table lists
    `SFI0;ISG1;OSG1;PSV0;HASH;DXIL;PRIV` — note `DXIL` and `HASH`, i.e. a **DXIL** container, not legacy DXBC).
    A the publisher container nested *inside* Microsoft's container is a different composition from anything publicly
@@ -283,7 +283,7 @@ itself.
 ### Cheapest confirming experiment
 
 **Do a byte-level structural diff of two `FSSM` headers, and check where `DXBC`/`DXIL` sits relative to `FSSM`.**
-Concretely, on the the target title Scarlett shader library already in hand (no root, no installs needed):
+Concretely, on the target title Scarlett shader library already in hand (no root, no installs needed):
 
 1. In Python, `grep` the decompressed XBCH payloads for the byte strings `b"FSSM"` and `b"DXBC"` and record their
    offsets relative to the start of each blob. **If `DXBC` precedes `FSSM`, `FSSM` is inside the Microsoft

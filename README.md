@@ -30,7 +30,7 @@ identical interface, identical vtable, identical ABI — so the standard D3D12 A
 |---|---|---|
 | `runtime-bridge` | `d3d12_xs.dll`: the console runtime's 116 exports; forwards the standard API to a PC D3D12 runtime, emulates the console-only free functions | **built, contract byte-exact, runs under Wine** |
 | `extension-wrapper` | `d3d12_xs_wrap.dll`: the `X` methods the console appends to PC interfaces, console command-list types/IIDs, `CreateCommandList` interception, QI audit | **built, self-test 19/19, integrated end-to-end** |
-| `shader-bridge` | FSSM unwrap → RDNA2 stream (done for all 25,321 shaders) → DXIL via the the upstream shader recompiler front-end; root-signature → binding synthesis | **in progress** |
+| `shader-bridge` | FSSM unwrap → RDNA2 stream (done for all 25,321 shaders) → DXIL via the upstream shader recompiler front-end; root-signature → binding synthesis | **in progress** |
 | `memory-adapter` | console resource/heap flags, DCC/HTILE compression, tiling → PC heaps | **seam only** |
 | `present-adapter` | `DXGIXPresentArray`, vblank/frame notifications → PC DXGI | **seam only** |
 
@@ -104,16 +104,14 @@ first. On Windows they run natively, on Linux through Wine.
 | G6 | shader emitter: HLSL → DXC → real DXIL, container verified part-by-part (skips if the vendor DXC is absent) |
 | G7 | backend identity: on Linux the resolved runtime is vkd3d (D3D12 → Vulkan), not mislabelled as Microsoft's, with no `SCARAB_BACKEND` mismatch warning |
 
-## Shader target: DXIL, not SPIR-V
+## Shader target: DXIL
 
 The console shader container and a DXC-produced PC shader are **the same container** —
 same `DXBC` fourcc, same part layout, same nested `DXIL` tag, and at the same payload
 offset (+24) the console puts `XDAT`→zlib→FSSM microcode where the PC puts LLVM
 bitcode. So the target is **DXIL (LLVM bitcode, SM 6.x) in a DXBC container**, which is
 what both backends consume: Microsoft's D3D12 runtime on Windows, and vkd3d-proton on
-Linux (which then compiles it to SPIR-V itself). SPIR-V is the Vulkan IR, one layer
-below where this layer operates; targeting it would mean reimplementing the whole
-D3D12 API on Vulkan. Rationale and version policy: [docs/ROADMAP.md](docs/ROADMAP.md) §0.
+Linux. Rationale and version policy: [docs/ROADMAP.md](docs/ROADMAP.md) §0.
 
 ## Layout
 

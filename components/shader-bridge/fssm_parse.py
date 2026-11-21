@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Parser skeleton for the the publisher FSSM shader container (the target title, Scarlett).
+"""Parser skeleton for the publisher FSSM shader container (the target title, Scarlett).
 
 FSSM turns out to hold AMD RDNA/gfx10 (RDNA2 on Scarlett) GPU **machine code**,
 not the publisher IR/bytecode and not DXIL.  This module documents the container layout
 that was measured and walks the instruction stream with the RDNA2 family classifier
 in ``tools/rdna2_classify.py`` (encoding rules taken from AMD's machine-readable
-RDNA2 ISA XML via the the upstream shader recompiler RdnaDecoder).
+RDNA2 ISA XML via the upstream shader recompiler RdnaDecoder).
 
 Two input forms are accepted:
   * a decompressed FSSM blob                  -> parse_fssm(data)

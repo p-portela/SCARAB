@@ -11,12 +11,12 @@ title onto PC D3D12 — and that keeps growing as more of the console surface is
 and PC runtimes define *the same COM interfaces* (verified: 28/28 shared IIDs
 byte-identical), so the standard API is **forwarded**, not reimplemented, and only the
 *extension* surface is built. Shaders are a separate axis: the console feeds compiled
-RDNA2 microcode (FSSM) to the driver, which must be translated to SPIR-V/DXIL.
+RDNA2 microcode (FSSM) to the driver, which must be translated to DXIL.
 
 **Tech stack:** C++17 (components, cross-built with LLVM-mingw for
 x86_64-w64-windows-gnu), Python 3.13 (analysis tooling), CMake (build), Wine (test
 execution on Linux), `vendor/d3d12/include/d3d12.h` (Agility SDK header, authoritative
-ABI), the upstream shader recompiler's RDNA2→SPIR-V recompiler (upstream dependency).
+ABI), the upstream RDNA2 recompiler (upstream dependency).
 
 ---
 
@@ -35,7 +35,7 @@ These are findings from the current work, each with a verification we can point 
 | E7 | FSSM = RDNA2/gfx10 machine code in an XBCH(zlib)/XDAT container, inside a DXIL-shaped container | `s_endpgm` only in 25,782/25,782 blobs, control 0/3000; `XBSC_*`/`FSSM` magics present in the console shader compiler, absent from PC DXC |
 | E8 | The vendor ships a shader **disassembler** | `xbsc_xs.dll` exports `XBSC_DisassembleRawShader`, `XBSC_AssembleShader`, 43 exports total, loads under Wine |
 | E9 | VOP3 sub-encoding is base+offset, per the vendor's own text | `SQ_V_OP1_OFFSET + SQ_V_MOV_B32 …`; the upstream shader recompiler implements 0x100/0x180 consistently ⇒ the sweep failures are stream-alignment, not table errors |
-| E10 | console takes shader bindings from the PSO root signature, not a per-shader header | `shader-abi-notes.md`; the upstream shader recompiler's recompiler never reads the PS5 shader header |
+| E10 | console takes shader bindings from the PSO root signature, not a per-shader header | `shader-abi-notes.md`; the upstream recompiler's recompiler never reads the PS5 shader header |
 | E11 | Memory-model deltas are structural: DCC, HTILE resummarize, indirect-buffer heap flag, unified memory | UMD validation strings; `xg_xs.dll` (DCC encode/decode, swizzle modes) |
 | E12 | Presentation is console-specific | `DXGIXPresentArray`, `DXGIXSetFrameNotification`, `DXGIXSetVLineNotification`, `DXGIXGetFrameStatistics`; queue `PresentX` with planes |
 | E13 | Two hard gates remain | title exe absent from the rip by design; `the system image (encrypted)` encrypted, ODK slot 0 (retail) |
@@ -47,7 +47,7 @@ Five layers, each with an explicit seam so work can proceed without the title ex
 ```
   L4  diagnostics        logs, QI audit, appended-slot log, IOCTL/UMD trace
       ------------------- seam: structured event log ------------------------
-  L3  shader pipeline    FSSM -> RDNA2 -> IR -> SPIR-V/DXIL
+  L3  shader pipeline    FSSM -> RDNA2 -> IR -> DXIL
                          + root-signature -> binding-table synthesis (SRT/BDA)
                          + cooked-PSO (XBSC serialize/deserialize) translation
       ------------------- seam: D3D12UploadCustomMicrocodeX / PSO creation ---
@@ -73,7 +73,7 @@ L3 is research with two viable paths, and L0/L1 buy information rather than func
 |---|---|---|
 | `runtime-bridge` (`d3d12_xs.dll`) | the 116 exports; forwards the standard API to PC d3d12.dll; emulates console-only free functions | **built, contract verified, executed under Wine** |
 | `extension-wrapper` (`d3d12_xs_wrap.dll`) | appended `X` methods, console command-list types/IIDs, `CreateCommandList` interception, QI audit | **built, self-test 19/19, integrated end-to-end under Wine** |
-| `shader-bridge` | FSSM unwrap → RDNA2 stream (done) → SPIR-V/DXIL (via the upstream shader recompiler); root-signature→bindings | partially done (`fssm_to_rdna2.py` extracts 25,321 streams; recompiler links) |
+| `shader-bridge` | FSSM unwrap → RDNA2 stream (done) → DXIL (via the upstream shader recompiler); root-signature→bindings | partially done (`fssm_to_rdna2.py` extracts 25,321 streams; recompiler links) |
 | `memory-adapter` | `D3D12CONS_RESOURCE_FLAG_*` / heap flags / DCC / tiling semantics onto PC heaps and `xg_xs` equivalents | **not started**, interface to be defined now |
 | `present-adapter` | `DXGIXPresentArray` / vblank / frame events onto PC swapchains | **not started**, interface to be defined now |
 | `console-tooling` | run the vendor's own toolchain under Wine: disassemble FSSM, compile DXIL, build BVH | loadable, call signatures unrecovered |

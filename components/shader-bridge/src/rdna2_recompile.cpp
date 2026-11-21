@@ -4,7 +4,7 @@
 //
 // Bridge tool: takes a raw RDNA2 word stream (produced by
 // tools/fssm_to_rdna2.py from the target title / Scarlett FSSM shaders) and runs it
-// through the upstream shader recompiler's shader recompiler.
+// through the upstream recompiler's shader recompiler.
 //
 //   --disasm        disassemble via RdnaInstructionDecoder + RdnaProgramToString
 //   --spv <path>    recompile to a SPIR-V binary module

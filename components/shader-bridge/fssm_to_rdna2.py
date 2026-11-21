@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """FSSM (the target title / Scarlett shader container) -> raw RDNA2 code words + metadata.
 
-Front half of the bridge into the upstream shader recompiler's shader recompiler
+Front half of the bridge into the upstream recompiler's shader recompiler
 (the recompiler source tree), whose input is
 
     ShaderBinary { ShaderStage stage; uint64_t codeAddress;

@@ -37,7 +37,7 @@ leaves the recovered console flags unnumbered for exactly this reason.
 |---|---|
 | `components/runtime-bridge/` | the 116 exports. Header-free by design — do not add a D3D12 include. |
 | `components/extension-wrapper/` | interfaces this project *owns*. Inherit the real ones; let the compiler check the layout. |
-| `components/shader-bridge/` | FSSM/RDNA2 work and the the upstream shader recompiler integration |
+| `components/shader-bridge/` | FSSM/RDNA2 work and the upstream shader recompiler integration |
 | `components/{memory,present}-adapter/` | the unstarted seams |
 | `tools/` | analysis tooling. Anything a `docs/` claim depends on belongs here. |
 | `tests/` | the gates |

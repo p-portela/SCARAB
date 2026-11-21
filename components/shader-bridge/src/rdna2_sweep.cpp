@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Pedro Portela
 // rdna2_sweep.cpp
 //
-// Diagnostic for: why does the upstream shader recompiler's decoder reject the target title's RDNA2 streams?
+// Diagnostic for: why does the upstream recompiler's decoder reject the target title's RDNA2 streams?
 // Walks the instruction stream using the decoder's own wordCount, catches the
 // rejection per instruction, and for VOP3 encodings decodes the modifier fields
 // so the exact trigger is visible.

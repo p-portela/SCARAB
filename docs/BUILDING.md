@@ -118,9 +118,8 @@ So: the build is Wine-free, the primary (Windows) test path is Wine-free, and th
 place Wine is used as a *convenience* rather than a necessity — the shader compiler —
 is scheduled to lose it.
 
-- **Shaders are the main one.** vkd3d-proton consumes **DXIL**, not SPIR-V, so DXIL is
-  the portable target for the shader bridge: it works on Microsoft's runtime *and* on
-  vkd3d-proton. Emitting SPIR-V only would lock that work to the Linux path. See
+- **Shaders are the main one.** vkd3d-proton consumes **DXIL**, and so does Microsoft's
+  runtime, so DXIL is the portable target for the shader bridge: it works on both. See
   [`components/shader-bridge/README.md`](../components/shader-bridge/README.md).
 - **The extension wrapper is entirely backend-neutral.** It only implements COM
   interfaces and forwards through vtables; it does not know or care which runtime is

@@ -3,10 +3,10 @@
 # shader-bridge: the FSSM -> RDNA2 -> DXIL pipeline.
 #
 # See docs/ROADMAP.md section 0 for why the target is DXIL (LLVM bitcode, shader
-# model 6.x) inside a DXBC container, and not SPIR-V.
+# model 6.x) inside a DXBC container.
 #
 # The extractor side is Python (fssm_*.py, run from the CLI); this builds the
-# C++ side, which is what has to talk to DXC and to the the upstream shader recompiler recompiler.
+# C++ side, which is what has to talk to DXC and to the upstream shader recompiler.
 
 # DXC's own headers. Vendored because the header is the ABI contract and pinning
 # it is safer than tracking upstream; it carries no binaries.

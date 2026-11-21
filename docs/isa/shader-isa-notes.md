@@ -86,7 +86,7 @@ RdnaVectorOpDecoder.cpp:664   lookupVectorOpcode(vop3EncodedVop1Opcodes, opcode 
 ```
 
 So decoding `0x180` as `VNop` (VOP1 offset + V_NOP) is **the intended behaviour of
-the upstream shader recompiler's tables, and the vendor's documentation confirms that convention exists.**
+the upstream recompiler's tables, and the vendor's documentation confirms that convention exists.**
 The earlier conclusion — "either the console `0x180` mapping differs, or my field
 decode is wrong" — therefore resolves toward the second option.
 
@@ -96,7 +96,7 @@ Proven: the FSSM container belongs to the console shader compiler; the vendor sh
 a disassembler; the VOP3 offset-encoding convention is real and documented.
 
 **Not proven:** the numeric values of `SQ_V_OP{1,2,C}_OFFSET` / `SQ_V_INTRP_OFFSET`.
-They are compiler constants and do not appear as strings. the upstream shader recompiler's `0x100` / `0x180`
+They are compiler constants and do not appear as strings. the upstream recompiler's `0x100` / `0x180`
 match the well-known published convention, and the vendor text confirms the
 convention's existence, but the constants themselves are still taken on trust.
 
@@ -113,7 +113,7 @@ whose word count was mis-decoded.
 Either way the next move is measurement, not more table archaeology:
 
 1. Run `XBSC_DisassembleRawShader` on real blobs (portable Wine, Linux) and
-   compare against the the upstream shader recompiler decode. This answers the ISA questions outright and
+   compare against the upstream shader recompiler decode. This answers the ISA questions outright and
    validates or refutes `docs/fssm-analysis.md`. **Available now**: the signature is
    recovered and the call is proven end to end — see `tools/xbsc_probe_notes.md`.
 2. Re-run the sweep checking instruction-boundary alignment rather than opcode
