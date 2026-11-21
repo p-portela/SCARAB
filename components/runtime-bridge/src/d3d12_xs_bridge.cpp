@@ -124,12 +124,32 @@ static void read_file_version(const wchar_t* path, wchar_t* out, size_t cap) {
     free(buf);
 }
 
-// Best-effort identification, by path. Never authoritative - reported as a hint.
-static const wchar_t* classify_backend(const wchar_t* path) {
+// Is this process running under Wine/Proton? Detected by the Wine-specific
+// ntdll export, not by path. Wine's builtin d3d12.dll sits at
+// C:\windows\system32\d3d12.dll, so the path cannot tell it apart from
+// Microsoft's runtime - and on Linux that builtin *is* the D3D12 -> Vulkan
+// bridge. Getting this wrong mislabels the layer's own backend on the one host
+// where vkd3d is the whole point.
+static bool host_is_wine() {
+    static int cached = -1;
+    if (cached >= 0) return cached == 1;
+    HMODULE nt = GetModuleHandleW(L"ntdll.dll");
+    cached = (nt && GetProcAddress(nt, "wine_get_version")) ? 1 : 0;
+    return cached == 1;
+}
+
+// Which D3D12 runtime did we actually load? Reported as a hint - but the hint
+// has to be right where it matters: under Wine/Proton the vkd3d-proton-derived
+// implementation is the only one that exists, so it is what got loaded.
+static const wchar_t* classify_backend(const wchar_t* path, const wchar_t* ver) {
     if (wcsstr(path, L"vkd3d")) return L"vkd3d-proton (D3D12 -> Vulkan)";
-    if (wcsstr(path, L"wine"))   return L"wine builtin d3d12";
-    if (wcsstr(path, L"System32") || wcsstr(path, L"system32"))
-        return L"Microsoft d3d12 (system)";
+    if (host_is_wine())         return L"vkd3d-proton / wine builtin (D3D12 -> Vulkan)";
+    if (wcsstr(path, L"System32") || wcsstr(path, L"system32")) {
+        // Microsoft's runtime always carries a version resource; an unversioned
+        // module under system32 is an override, i.e. something that is not MS.
+        return (ver && ver[0]) ? L"Microsoft d3d12 (system)"
+                               : L"unversioned d3d12 in system32 (override?)";
+    }
     return L"custom / app-local";
 }
 
@@ -138,7 +158,7 @@ static void log_backend(HMODULE mod) {
     GetModuleFileNameW(mod, path, MAX_PATH);
     wchar_t ver[64];
     read_file_version(path, ver, 64);
-    g_backend_kind = classify_backend(path);
+    g_backend_kind = classify_backend(path, ver);
     blog("backend: %ls", g_backend_kind);
     blog("backend: %ls%s%ls", path, ver[0] ? L"  version " : L"", ver);
 

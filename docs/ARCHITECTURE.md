@@ -63,11 +63,19 @@ lookup rather than an `#ifdef`:
 |---|---|---|
 | Microsoft D3D12 (system) | Windows | default lookup |
 | Microsoft Agility SDK | Windows | an app-local `D3D12Core.dll`; we load the *loader*, never the core (the core exports only `D3D12GetInterface` and `D3D12SDKVersion`) |
-| vkd3d-proton (D3D12 → Vulkan) | Linux | automatic under Proton, else `SCARAB_D3D12_DLL` |
+| vkd3d-proton (D3D12 → Vulkan) | Linux | automatic under Proton/Wine (their builtin `d3d12.dll` *is* the vkd3d-proton-derived implementation), else an explicit build via `SCARAB_D3D12_DLL` |
 
 `SCARAB_BACKEND` declares the expectation and a mismatch is logged loudly, and the
 resolved backend (path + version resource) is written to the log on load — so "which
 runtime am I actually on?" is answerable without a debugger.
+
+**On Wine/Proton the backend is detected, not guessed.** Wine's builtin `d3d12.dll`
+lives at `C:\windows\system32\d3d12.dll`, so a path substring check cannot tell it
+apart from Microsoft's runtime — the first implementation of this labelled the
+vkd3d-proton backend "Microsoft d3d12 (system)" and warned about a mismatch that did
+not exist. The bridge asks the *host* instead (`ntdll!wine_get_version`): under
+Wine/Proton there is no Microsoft D3D12, so the loaded runtime is the D3D12 → Vulkan
+bridge. Gate G7 asserts this on a live run, in both directions.
 
 Two consequences worth stating:
 
@@ -148,6 +156,8 @@ corruption.
 | G3 wrapper logic | `wine wrapper_selftest.exe` | 0 failures across QI routing, refcounting, validation, unknown-slot logging |
 | G4 integration | `wine integration_test.exe` | console DMA command list created through PC D3D12 and serves its console IID |
 | G5 tooling | `python3 tests/test_tools.py` | PE parser, header generator, IID extraction, catalogue completeness |
+| G6 shader emitter | `wine dxc_emit_test.exe <dxcompiler.dll>` | HLSL → DXC → a container whose DXIL part holds LLVM bitcode, verified part-by-part (exits 77 = SKIP when the vendor DXC is absent) |
+| G7 backend identity | `python3 tests/test_backend_identity.py <launcher> integration_test.exe` | on Linux the resolved backend is vkd3d (not Microsoft), `SCARAB_BACKEND` and the resolved runtime agree (no warning), and a real device came back through it |
 
 `tests/run_tests.sh` runs all of them and exits non-zero on any failure.
 
@@ -173,6 +183,7 @@ they came from:
 | E13 | two gates remain outside this project | title exe absent by design; `the system image (encrypted)` encrypted, retail ODK |
 | E14 | the console shader container is the standard DXBC/DXIL container | same fourcc, same parts (`SFI0 ISG1 OSG1 PSV0 HASH DXIL`), same nested `DXIL` tag; at payload+24 the console has `XDAT`→zlib→FSSM where DXC has `BC C0 DE`→bitcode. Measured by comparing a console shader against a locally produced DXC output |
 | E15 | we can produce real DXIL locally | `dxcompiler.dll` under Wine compiles HLSL to a container whose DXIL part holds LLVM bitcode — gate G6 |
+| E16 | the Linux forwarding path really is D3D12 → Vulkan | the runtime the bridge loads under Wine (`C:\windows\system32\d3d12.dll`) carries `vkd3d_create_device` / `vkd3d_create_instance` / `Failed to create vkd3d instance` / `vulkan-1.dll`, i.e. Wine's vkd3d-proton-derived `d3d12`; a device comes back through it with a Vulkan ICD present (lavapipe) — gates G4 and G7, log line `backend: vkd3d-proton / wine builtin (D3D12 -> Vulkan)` |
 
 ## 7. Known risks
 

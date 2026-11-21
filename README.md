@@ -103,6 +103,7 @@ first. On Windows they run natively, on Linux through Wine.
 | G4 | integration: console DMA command list created through PC D3D12, serving its console IID |
 | G5 | tooling unit tests: PE parser, header generator, IID extraction, catalogue completeness |
 | G6 | shader emitter: HLSL → DXC → real DXIL, container verified part-by-part (skips if the vendor DXC is absent) |
+| G7 | backend identity: on Linux the resolved runtime is vkd3d (D3D12 → Vulkan), not mislabelled as Microsoft's, with no `SCARAB_BACKEND` mismatch warning |
 
 ## Shader target: DXIL, not SPIR-V
 

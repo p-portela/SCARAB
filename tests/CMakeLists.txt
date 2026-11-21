@@ -38,14 +38,27 @@ scarab_configure_exe(integration_test)
 # The integration test loads d3d12_xs.dll by name and the bridge then looks for
 # d3d12_xs_wrap.dll beside it. Put all three together in the build tree so the
 # test works the same natively on Windows and under Wine, with no PATH games.
-foreach(_tgt wrapper_selftest integration_test)
-  add_custom_command(TARGET ${_tgt} POST_BUILD
+#
+# Staged as an explicit file-level rule rather than a POST_BUILD step on the test
+# executables: a POST_BUILD only fires when *its own* target is out of date, so a
+# change to the bridge alone would leave a stale DLL beside an up-to-date test -
+# which silently tests the wrong binary.
+set(SCARAB_TEST_STAGE_DIR "${CMAKE_BINARY_DIR}/tests")
+set(_staged "")
+foreach(_name d3d12_xs.dll d3d12_xs_wrap.dll)
+  string(REPLACE ".dll" "" _tgt "${_name}")
+  add_custom_command(
+    OUTPUT "${SCARAB_TEST_STAGE_DIR}/${_name}"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${SCARAB_TEST_STAGE_DIR}"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:d3d12_xs> "$<TARGET_FILE_DIR:${_tgt}>"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:d3d12_xs_wrap> "$<TARGET_FILE_DIR:${_tgt}>"
-    COMMENT "Staging the DLLs next to ${_tgt}")
+            $<TARGET_FILE:${_tgt}> "${SCARAB_TEST_STAGE_DIR}"
+    DEPENDS ${_tgt}
+    COMMENT "Staging ${_name} beside the WinPE tests")
+  list(APPEND _staged "${SCARAB_TEST_STAGE_DIR}/${_name}")
 endforeach()
+add_custom_target(scarab_stage_tests ALL DEPENDS ${_staged})
+add_dependencies(wrapper_selftest scarab_stage_tests)
+add_dependencies(integration_test scarab_stage_tests)
 
 # ---------------------------------------------------------------------------
 # gates
@@ -80,6 +93,18 @@ if(TARGET dxc_emit_test)
     SKIP_RETURN_CODE 77
     WORKING_DIRECTORY "$<TARGET_FILE_DIR:dxc_emit_test>")
 endif()
+
+# G7: the bridge must identify its own backend correctly. The Linux path *is*
+# the D3D12 -> Vulkan bridge, and a path-based guess once labelled Wine's builtin
+# (vkd3d-proton) as Microsoft's runtime and warned about a mismatch that did not
+# exist. Runs the integration test and reads the bridge's log. The launcher is
+# passed through so the test can tell which host it is on (empty -> native).
+add_test(NAME G7_backend_identity
+  COMMAND "${SCARAB_PYTHON}" "${_t}/test_backend_identity.py"
+          "${_launch}" "$<TARGET_FILE:integration_test>")
+set_tests_properties(G7_backend_identity PROPERTIES
+  SKIP_RETURN_CODE 77
+  WORKING_DIRECTORY "$<TARGET_FILE_DIR:integration_test>")
 
 # G2 is the build itself: the wrapper compiles only if `override` matches the
 # real header for all 53 device and 76 command-list methods. There is nothing
