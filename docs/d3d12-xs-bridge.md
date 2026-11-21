@@ -90,8 +90,12 @@ functions plus command-list interfaces**, not a new device interface: there is n
 
 ## 4. Export disposition — all 116
 
-Generated table: `bridge/exports_console.csv` (ordinal, name, kind).
-Mechanical contract: `bridge/d3d12_xs.def`.
+Both artefacts below are **generated at build time** from the runtime the user
+supplies (`SCARAB_VENDOR`), not committed: the table and the `.def` *are* the
+vendor's export table. `tools/gen_def.py` emits them into the build tree
+(`components/runtime-bridge/exports_console.csv`, `d3d12_xs.def`), aliasing the
+vendor's console-only export names onto our own source symbols so no brand token
+is needed in the sources. Gate G1 checks the result against that same artifact.
 
 | ordinals | group | disposition |
 |---|---|---|

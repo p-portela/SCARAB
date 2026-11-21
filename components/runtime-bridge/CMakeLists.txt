@@ -22,5 +22,25 @@ scarab_strict_warnings(d3d12_xs)
 # the log alone.
 target_link_libraries(d3d12_xs PRIVATE user32 advapi32 kernel32 version)
 
-scarab_configure_shared(d3d12_xs "${CMAKE_CURRENT_SOURCE_DIR}/d3d12_xs.def")
+# The export contract (.def) is *generated* from the console runtime the user
+# supplies, not committed: it is the vendor's export table. tools/gen_def.py
+# emits it, aliasing the vendor's console-only export names onto our own source
+# symbols (the vendor token is derived from the two runtimes, never hardcoded, and
+# the mapping is verified against the symbols this repo defines). Outcome is
+# checked by gate G1 against the same artifact.
+set(SCARAB_DEF "${CMAKE_CURRENT_BINARY_DIR}/d3d12_xs.def")
+set(SCARAB_REF_DLL "${SCARAB_VENDOR}/x64_dx12/d3d12_xs.dll")
+set(SCARAB_REF_SHARED_DLL "${SCARAB_VENDOR}/d3d12/os/d3d12.dll")
+add_custom_command(
+  OUTPUT "${SCARAB_DEF}"
+  COMMAND "${SCARAB_PYTHON}" "${CMAKE_SOURCE_DIR}/tools/gen_def.py"
+          "${SCARAB_REF_DLL}" "${SCARAB_REF_SHARED_DLL}" "${SCARAB_DEF}"
+          "${CMAKE_CURRENT_BINARY_DIR}/exports_console.csv"
+  DEPENDS "${SCARAB_REF_DLL}" "${SCARAB_REF_SHARED_DLL}"
+          "${CMAKE_SOURCE_DIR}/tools/gen_def.py"
+  COMMENT "Generating the d3d12_xs export contract from the supplied runtime")
+add_custom_target(d3d12_xs_contract DEPENDS "${SCARAB_DEF}")
+add_dependencies(d3d12_xs d3d12_xs_contract)
+
+scarab_configure_shared(d3d12_xs "${SCARAB_DEF}")
 set_target_properties(d3d12_xs PROPERTIES OUTPUT_NAME "d3d12_xs")

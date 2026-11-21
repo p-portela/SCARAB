@@ -21,6 +21,7 @@ sys.path.insert(0, os.path.join(ROOT, "components", "shader-bridge"))
 
 VENDOR = os.environ.get("SCARAB_VENDOR", os.path.join(ROOT, "vendor"))
 REF = os.path.join(VENDOR, "x64_dx12", "d3d12_xs.dll")
+SHARED_REF = os.path.join(VENDOR, "d3d12", "os", "d3d12.dll")
 HEADER = os.path.join(VENDOR, "d3d12", "include", "d3d12.h")
 
 have = os.path.exists(REF)
@@ -140,17 +141,22 @@ def test_wrapper_console_iids_come_from_the_runtime():
     if need():
         return
     from peinfo import PE
+    from gen_def import load_mapping
     inc = open(os.path.join(ROOT, "components", "extension-wrapper", "src",
                             "iid_console.inc"), encoding="utf-8").read()
     defined = dict(re.findall(r"const GUID (\w+) = \{0x([0-9a-f]+),", inc))
     assert "IID_ID3D12ConsDmaCommandList" in defined
     assert defined["IID_ID3D12ConsDmaCommandList"] == "30bc77b9"
 
+    # Our source symbols deliberately differ from the vendor's export names (the
+    # .def aliases them, see tools/gen_def.py). Map exported name -> source symbol
+    # with the one shared definition so the two can never drift apart.
     pe = PE(REF)
+    mapping = load_mapping(REF, SHARED_REF)
     real = {}
     for n, o, r in pe.exports()["names"]:
         if n.startswith("IID_"):
-            real[n] = pe.b[pe.r2o(r):pe.r2o(r) + 16]
+            real[mapping[n]] = pe.b[pe.r2o(r):pe.r2o(r) + 16]
     assert "IID_ID3D12ConsDmaCommandList" in real, "runtime no longer exports this IID"
     d1 = struct.unpack_from("<I", real["IID_ID3D12ConsDmaCommandList"], 0)[0]
     assert d1 == int(defined["IID_ID3D12ConsDmaCommandList"], 16)
