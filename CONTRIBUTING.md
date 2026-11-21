@@ -85,6 +85,14 @@ to one jumped into garbage (execute-access violation under Wine).
 Now queries the highest supported version and refuses to wrap below 4.
 ```
 
+### Tagging
+
+Do **not** tag per commit or per feature. A version tag marks a finished milestone, and
+only after every exit criterion in [docs/MILESTONES.md](docs/MILESTONES.md) is evidenced by
+a repeatable run on the hosts that apply. Tag messages name the criteria they close. If a
+change feels tag-worthy, the right question is which milestone it advances, not what
+number to give it.
+
 ## Licence
 
 This project is GPL-3.0-only (see `LICENSE`). By contributing you agree your

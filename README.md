@@ -131,6 +131,8 @@ docs/                          architecture, findings, provenance
 
 ## Documentation
 
+- [docs/MILESTONES.md](docs/MILESTONES.md) — the version ladder: what each version means
+  and the exit criteria that must be evidenced before it is tagged
 - [docs/ROADMAP.md](docs/ROADMAP.md) — the bytecode decision, phases, gates and risks
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — the layered design, and why each seam is
   where it is

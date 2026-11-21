@@ -2,6 +2,10 @@
 
 > Living document. Every phase has an exit gate that is a command, not an opinion.
 
+Version numbers are **milestones, not checkpoints** — see [MILESTONES.md](MILESTONES.md)
+for the ladder and each version's exit criteria. No tag is placed for work that is not a
+finished milestone.
+
 ## 0. The bytecode decision (settled, with evidence)
 
 **Target: DXIL — LLVM bitcode, shader model 6.x — carried in a `DXBC` container.**
