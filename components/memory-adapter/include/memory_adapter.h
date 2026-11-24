@@ -96,6 +96,19 @@ int32_t XGSuggestSwizzleMode(const uint32_t* desc, uint32_t what, uint32_t* out)
 // 64KB mode. Returns 0 (S_OK) and stores 0x18 at *out.
 int32_t XGComputeOptimalDepthStencilSwizzleMode(uint32_t* out);
 
+// xg_xs.dll XGComputeTileShape: the tile-shape decision for a surface.
+//   param_1: shape kind (1 = linear, 3 = surface; 2 / 4 / unknown refuse)
+//   param_2: descriptor id (the table-dependent path; refused here, the
+//            descriptor tables are unrecoverable in this repository)
+//   param_3: tile size (1/2/4/8/16 for surfaces, <= 1 for linear)
+//   param_4: elements per side (1/2/4/8 for surfaces, must be 1 for linear)
+//   param_5: 3-uint output; zeroed on the fast path (the DLL writes (0,0,0))
+//   param_6: 3-uint output (tile width, tile height/count, 1) if non-null
+// Returns 0 on success, 0x80070057 for refused inputs, 0x80004001 for the
+// refused shape kinds, 0x80004005 for the descriptor-table path.
+int32_t XGComputeTileShape(int param_1, int param_2, uint32_t param_3, int param_4,
+                           int* param_5, int* param_6);
+
 #ifdef __cplusplus
 }
 #endif

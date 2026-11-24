@@ -145,3 +145,66 @@ int32_t XGComputeOptimalDepthStencilSwizzleMode(uint32_t* out) {
     *out = 0x18u;
     return 0;
 }
+
+// ---------------------------------------------------------------------------
+// XGComputeTileShape -- port of the fast path in the DLL. The descriptor-
+// dependent path (param_2 != 0) is refused: the tables are not recoverable.
+// ---------------------------------------------------------------------------
+
+int32_t XGComputeTileShape(int param_1, int param_2, uint32_t param_3, int param_4,
+                           int* param_5, int* param_6) {
+    // param_1 == 1: linear, a fixed 64 KiB tile. param_1 == 0: falls through
+    // (per the decompiled control flow) to the uninitialized surface path,
+    // which refuses everything above it.
+    if (param_1 == 1) {
+        if (param_4 != 1) return 0x80070057;
+        if (param_2 != 0) return 0x80070057;
+        if (param_3 > 1u) return 0x80070057;
+        if (param_6) {
+            *param_6 = 0x10000;
+            param_6[1] = 1;
+            param_6[2] = 1;
+        }
+        if (param_5) { param_5[0] = 0; param_5[1] = 0; param_5[2] = 0; }
+        return 0;
+    }
+    if (param_1 != 3) {
+        // param_1 == 2/4 refuse (0x80004001); param_1 == 0 refuses to write
+        // (per the decompiled control flow), which we report as the same
+        // refusal -- the caller owns the distinction.
+        return 0x80004001;
+    }
+    if (param_2 != 0) {
+        // The descriptor-dependent path. Unrecoverable here -- refuse.
+        return 0x80004005;
+    }
+    uint64_t uVar6 = 0, uVar8 = 0;
+    int iVar7 = 0;
+    if (param_3 == 1u) { uVar6 = 0x100; uVar8 = 0x100; }
+    else if (param_3 == 2u) { uVar6 = 0x100; uVar8 = 0x80; }
+    else if (param_3 == 4u) { uVar8 = 0x80; uVar6 = 0x80; }
+    else if (param_3 == 8u) { uVar6 = 0x80; uVar8 = 0x40; }
+    else {
+        if (param_3 != 0x10u) return 0x80070057;
+        uVar8 = 0x40;
+        uVar6 = 0x40;
+    }
+    iVar7 = (int)uVar8;
+    if (param_4 != 1) {
+        if (param_4 != 2) {
+            if (param_4 != 4) {
+                if (param_4 != 8) return 0x80070057;
+                uVar6 >>= 1;
+            }
+            iVar7 = (int)(uVar8 >> 1);
+        }
+        uVar6 >>= 1;
+    }
+    if (param_6) {
+        *param_6 = (int)uVar6;
+        param_6[1] = iVar7;
+        param_6[2] = 1;
+    }
+    if (param_5) { param_5[0] = 0; param_5[1] = 0; param_5[2] = 0; }
+    return 0;
+}

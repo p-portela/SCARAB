@@ -104,6 +104,56 @@ Exit criteria
    when the PC path has none) and is documented as a deliberate decision.
 4. HDR/refresh-rate paths: at least one presentation variant other than 60 Hz default.
 
+Status (2026-11-24): **partial** — criterion 2 is met for the part this repo can
+honestly do. The memory-adapter (`components/memory-adapter/`) implements: the
+console swizzle policy (`XGSuggestSwizzleMode`,
+`XGComputeOptimalDepthStencilSwizzleMode`, `scarab_optimal_swizzle_mode`,
+`scarab_validate_depth_stencil_swizzle_mode`), flag translation with honest
+report-only semantics, and the xmem.dll shim for the exe's 12 imports. Every
+one of these is verified against the vendor `xg_xs.dll` itself under Wine
+(gate G9, `tests/xg_oracle_test.cpp`) — the oracle pins the descriptor mapping
+and the swizzle-mode chain, which is what makes the shim honest. Criteria 1,
+3 and 4 (presentation) are **not met**: the present-adapter is a seam and the
+exe does not import the DXGIX exports the bridge documents.
+
+## v0.5.1 — The texture layout surface is oracle-verified
+
+What it means: every internal shape decision the title makes for textures is
+verified against the console library, not just read off the decompiler.
+
+Exit criteria
+
+1. `XGComputeTileShape` ported for the fast paths (linear, 3-D-fast, and the
+   refusals) and each decision compared against the vendor in the oracle
+   (gate G9).
+2. `XGSuggestSwizzleMode` and `XGComputeOptimalSwizzleMode` oracle-verified
+   (already done, kept as the regression gate).
+3. The table-dependent paths (`param_2 != 0`) documented as explicitly refused,
+   not silently passed through.
+
+Status: **met** — `XGComputeTileShape` is ported and oracle-verified against
+the vendor (gate G9, all fast paths + the refusal kinds); the descriptor-
+dependent path is documented as refused, not passed through.
+
+## v0.6.0 — XGCreateTextureComputer
+
+What it means: the texture factory and its layout object.
+
+Exit criteria
+
+1. The factory skeleton (heap-allocated object, `+0xc` usage marker, `+0x32dc`
+   descriptor marker) layouted per the decompiled constructor
+   (`FUN_1800080a0`).
+2. The full `XG_RESOURCE_LAYOUT` struct (0x1B40) ported and oracle-verified —
+   **blocked** on the descriptor/table semantics (see
+   `docs/xg_xs-decompiled.md`): the 2D constructor's internal layout math
+   depends on tables that cannot be recovered from the artifacts. No part of
+   this milestone may be faked.
+3. `XGComputeTileShape` table-dependent paths (`param_2 != 0`) ported and
+   oracle-verified — **blocked** on the same tables.
+
+Status: **not met** — documented as a blocked milestone, not faked.
+
 ## v1.0.0 — A retail title boots and renders
 
 What it means: the layer's reason to exist, demonstrated.

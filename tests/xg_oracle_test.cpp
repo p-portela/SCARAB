@@ -21,6 +21,9 @@ typedef uint8_t  (WINAPI *PFN_Validate)(uint64_t, uint64_t, uint32_t);
 // XGComputeOptimalSwizzleMode(param_1, param_2, param_3, param_4, param_5, param_6,
 //                             param_7, param_8): eight positional args.
 typedef uint32_t (WINAPI *PFN_Optimal)(int, int, uint32_t, uint32_t, uint64_t, int, uint32_t, uint32_t);
+// XGComputeTileShape(param_1, param_2, param_3, param_4, param_5, param_6):
+// six positional args; param_5 / param_6 are 3-uint outputs.
+typedef int32_t (WINAPI *PFN_TileShape)(int, int, uint32_t, int, int*, int*);
 
 static int fails = 0;
 static void check(bool ok, const char* what, int32_t shim, int32_t vendor, uint64_t vendor_arg3) {
@@ -38,9 +41,10 @@ int main(int argc, char** argv) {
     auto suggest = (PFN_Suggest)GetProcAddress(h, "XGSuggestSwizzleMode");
     auto validate = (PFN_Validate)GetProcAddress(h, "XGValidateDepthStencilSwizzleMode");
     auto optimal = (PFN_Optimal)GetProcAddress(h, "XGComputeOptimalSwizzleMode");
-    if (!suggest || !validate || !optimal) {
+    auto tileshape = (PFN_TileShape)GetProcAddress(h, "XGComputeTileShape");
+    if (!suggest || !validate || !optimal || !tileshape) {
         printf("SKIP: vendor xg_xs.dll lacks %s\n",
-               !suggest ? "XGSuggestSwizzleMode" : (!validate ? "XGValidateDepthStencilSwizzleMode" : "XGComputeOptimalSwizzleMode"));
+               !suggest ? "XGSuggestSwizzleMode" : (!validate ? "XGValidateDepthStencilSwizzleMode" : (!optimal ? "XGComputeOptimalSwizzleMode" : "XGComputeTileShape")));
         return 77;
     }
 
@@ -106,6 +110,41 @@ int main(int argc, char** argv) {
         uint32_t vendor = optimal(t.layout, 0, t.w, t.h, 0, 0, t.flags, 0);
         printf("case 4: shim hr=%d raw=%u vendor=%u\n", shim_hr, shim_out, vendor);
         check(shim_hr == 0 && shim_out == vendor, "XGComputeOptimalSwizzleMode", shim_out, vendor, 0);
+    }
+
+    // --- XGComputeTileShape: linear, surfaces, refused kinds. Positional
+    // args (1,2,3,4,5,6): 1=kind, 2=descriptor (0 here), 3=tile size,
+    // 4=elements per side, 5/6 = 3-uint outputs.
+    struct { int p1; int p2; uint32_t p3; int p4; } tshape[] = {
+        { 1, 0, 1, 1 },   // linear
+        { 1, 0, 2, 1 },   // linear, refused tile size
+        { 3, 0, 1, 1 },   // 1x1 surface, single element
+        { 3, 0, 2, 2 },   // 2x1 surface, double elements
+        { 3, 0, 4, 2 },   // 4x1 surface
+        { 3, 0, 8, 4 },   // 8x2 surface, quad elements
+        { 3, 0, 16, 8 },  // 16x4 surface, oct elements
+        { 3, 0, 1, 4 },   // 2x0 surface, quad elements
+        { 3, 0, 1, 8 },   // 1x0 surface, oct elements
+        { 3, 0, 99, 1 },  // surface, refused tile size
+        { 2, 0, 1, 1 },   // refused kind
+        { 4, 0, 1, 1 },   // refused kind
+    };
+    for (size_t i = 0; i < sizeof(tshape) / sizeof(tshape[0]); i++) {
+        auto& t = tshape[i];
+        int shim_out5[3] = {0, 0, 0}, shim_out6[3] = {0, 0, 0};
+        int vend_out5[3] = {0, 0, 0}, vend_out6[3] = {0, 0, 0};
+        int32_t shim_hr = XGComputeTileShape(t.p1, t.p2, t.p3, t.p4, shim_out5, shim_out6);
+        int32_t vend_hr = tileshape(t.p1, t.p2, t.p3, t.p4, vend_out5, vend_out6);
+        printf("case 5: hr=%d/%d out5=(%d,%d,%d)/(%d,%d,%d) out6=(%d,%d,%d)/(%d,%d,%d)\n",
+               shim_hr, vend_hr,
+               shim_out5[0], shim_out5[1], shim_out5[2],
+               vend_out5[0], vend_out5[1], vend_out5[2],
+               shim_out6[0], shim_out6[1], shim_out6[2],
+               vend_out6[0], vend_out6[1], vend_out6[2]);
+        bool hr_ok = shim_hr == vend_hr;
+        bool out_ok = shim_out5[0] == vend_out5[0] && shim_out5[1] == vend_out5[1] && shim_out5[2] == vend_out5[2] &&
+                      shim_out6[0] == vend_out6[0] && shim_out6[1] == vend_out6[1] && shim_out6[2] == vend_out6[2];
+        check(hr_ok && out_ok, "XGComputeTileShape", hr_ok ? 1 : 0, out_ok ? 1 : 0, 0);
     }
 
     printf(fails == 0 ? "RESULT: PASS\n" : "RESULT: FAIL\n");

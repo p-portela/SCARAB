@@ -118,6 +118,32 @@ int main() {
     check(XGComputeOptimalDepthStencilSwizzleMode(&raw) == 0 && raw == 0x18u,
           "XGComputeOptimalDepthStencilSwizzleMode -> 0x18");
 
+    // XGComputeTileShape: linear, fast surface path, refusals
+    int t5[3] = {0, 0, 0}, t6[3] = {0, 0, 0};
+    check(XGComputeTileShape(1, 0, 1, 1, t5, t6) == 0 &&
+          t6[0] == 0x10000 && t6[1] == 1 && t6[2] == 1,
+          "XGComputeTileShape linear -> 64 KiB tile");
+
+    check(XGComputeTileShape(3, 0, 4, 2, t5, t6) == 0 &&
+          t6[0] == 64 && t6[1] == 128 && t6[2] == 1,
+          "XGComputeTileShape surface 4x2 -> 64/128");
+
+    check(XGComputeTileShape(3, 0, 1, 4, t5, t6) == 0 &&
+          t6[0] == 128 && t6[1] == 128 && t6[2] == 1,
+          "XGComputeTileShape surface 1x4 -> 128/128");
+
+    check(XGComputeTileShape(1, 0, 2, 1, t5, t6) != 0,
+          "XGComputeTileShape linear refused tile size");
+
+    check(XGComputeTileShape(3, 0, 99, 1, t5, t6) != 0,
+          "XGComputeTileShape surface refused tile size");
+
+    check(XGComputeTileShape(2, 0, 1, 1, t5, t6) != 0,
+          "XGComputeTileShape refused kind");
+
+    check(XGComputeTileShape(3, 1, 1, 1, t5, t6) != 0,
+          "XGComputeTileShape descriptor path refused honestly");
+
     // tools memory: honest negative
     check(XMemIsToolsMemAvailable() == 0, "XMemIsToolsMemAvailable is honestly negative");
 
