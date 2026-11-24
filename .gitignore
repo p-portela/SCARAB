@@ -26,6 +26,7 @@ gen_clist.inc
 # the publisher's game data.
 /vendor
 /corpora
+/artifacts
 
 # python
 __pycache__/

@@ -48,19 +48,35 @@ def vendor_boundaries(words, workdir):
                WINEPREFIX=os.environ.get("WINEPREFIX", os.path.expanduser("~/.wine-scarab")))
     out = subprocess.run([WINE, EXE, "Z:" + DLL, "Z:" + mpath, "batch"],
                          capture_output=True, text=True, env=env).stdout
-    counts = {}
+    counts, last = {}, {}
     for m in re.finditer(r"^@@ .*?p(\d+)\.rdna2 rc=(\d+) g=(-?\d+) len=(\d+)$(.*?)^@@END$",
                          out, re.M | re.S):
         body = m.group(5)
-        counts[int(m.group(1))] = len(
-            [l for l in body.splitlines()
-             if l.strip() and l.strip() not in ("shader main", "end")
-             and not l.strip().startswith(("asic(", "type("))])
+        lines = [l.strip() for l in body.splitlines()
+                 if l.strip() and l.strip() not in ("shader main", "end")
+                 and not l.strip().startswith(("asic(", "type("))
+                 and not re.match(r"^label_[0-9A-Fa-f]+:$", l.strip())]
+        j = int(m.group(1))
+        counts[j] = len(lines)
+        last[j] = lines[-1] if lines else ""
     bounds, prev = {0}, 0
     for j in range(1, len(words) + 1):
         n = counts.get(j)
         if n is not None and n > prev:
-            bounds.add(j - 1)          # the word that completed the instruction
+            # The instruction that completed at word j-1 ends here, so the next
+            # instruction (if any) starts at word j. The final j is the end of
+            # the stream, not the start of an instruction.
+            #
+            # Exception: the vendor decodes an instruction with a literal operand
+            # as soon as its non-literal words are present, printing the missing
+            # literal as 0x00000000. That makes the literal word look like a new
+            # instruction start. When the just-printed line carries an 8-digit
+            # hex literal, it still consumes word j, so the next start is j+1.
+            nxt = j
+            if re.search(r"0x[0-9A-Fa-f]{8}", last.get(j, "")) and j + 1 < len(words):
+                nxt = j + 1
+            if nxt < len(words):
+                bounds.add(nxt)
             prev = n
     return bounds
 
@@ -94,7 +110,9 @@ def main():
         data = open(path, "rb").read()
         words = list(struct.unpack("<%dI" % (len(data) // 4), data[: len(data) // 4 * 4]))
         ours = set(i for i, _n, _f in rc.walk(words))
-        vend = vendor_boundaries(words, "/tmp/xbsc-bnd/" + os.path.basename(path)[:40])
+        tag = re.sub(r"[^A-Za-z0-9_.-]", "_", os.path.basename(path))[:40]
+        tag = tag.rstrip(".") or "blob"   # Wine strips a trailing dot from a path
+        vend = vendor_boundaries(words, "/tmp/xbsc-bnd/" + tag)
         ours_only = sorted(ours - vend)
         vend_only = sorted(vend - ours)
         for i in ours_only:

@@ -73,6 +73,7 @@ mechanical operation instead of 129 chances to make a mistake.
 | the other 9 console IIDs (`ID3D11DeviceX`, `ID3D11DeviceContextX`, `ID3D11DmaEngineContextX`, `ID3D11PerformanceDeviceX`, `ID3D11PerformanceContextX`, `ID3D11UserDefinedAnnotationX`, `ID3D11CounterSetX`, `ID3D11CounterSampleX`, `IGraphicsUnknown`) | **proven** — exported at known ordinals |
 | IIDs of `ID3D12ConsComputeCommandList` / `…6(Compute)` / `…8(Compute)` / `ID3D12ConsCopyCommandList6` | **NOT recovered** — not exported by the runtime. 7 candidate v4 UUIDs sit 16-byte-aligned immediately after `IID_ID3D12Device4` in the UMD's `.rdata`; they are recorded in `iid_provenance.json` as CANDIDATE, not used |
 | **the order of the appended console methods** | **ASSUMED** — assumption #1, see §4 |
+| **the slot ordinals of the frame-pacing trio** | **MEASURED** — `SetFrameIntervalX` 78, `ScheduleFrameEventX` 79, `WaitFrameEventX` 80, read from a retail Series title's own vtable dispatch (`tools/device_slot_usage.py`, data in `wrap/docs/device-slot-measurements.tsv`) |
 | the signatures of the console methods | **inferred** from UMD messages and the nearest PC method, marked per method |
 | the full catalogue | `wrap/docs/console-extension-catalogue.tsv` (105 methods, 106 enums) |
 
@@ -113,6 +114,67 @@ The same principle applies to IIDs: unknown `QueryInterface` calls are logged
 with their full GUID, and when the PC object can serve one the wrapper says so
 explicitly, because that means interception is lost for that interface. That log
 is exactly how the four missing console IIDs will be identified from the title.
+
+### 4.1 The assumption, attacked with a real title's code
+
+Assumption #1 can now be tested instead of defused, because a retail Series title
+was available and its calls *are* the ABI. `tools/device_slot_usage.py` finds the
+global the title keeps its device in (the out-parameter of `D3D12XboxCreateDevice`),
+follows that pointer through registers at every call site, and reports the vtable
+slot each proven call uses. Slots with no such proof are absent from the output,
+not guessed — a wrong ordinal is worse than a missing one.
+
+The measurement (100 MB of `.text`, 12 device globals, 102 device loads, 78 proven calls) places the frame-pacing trio at **78 = `SetFrameIntervalX`, 79 = `ScheduleFrameEventX`,
+80 = `WaitFrameEventX`**, corroborated by the arguments at those sites: 78 is called
+with an interval computed from a framerate bucket, 79 with a fractional offset, and
+80 with `0xffffffff` and an out-parameter for the token, in that order. The names
+match the receivers the sample set shows for those three methods, and the ordering
+is the opposite of the one assumed in `console_extensions.h` (which had
+`ScheduleFrameEventX` before `SetFrameIntervalX`).
+
+That has a structural consequence. A console block starting immediately after
+`ID3D12Device4` (slot 55) would put these three at 55-57. They are at 78-80, so
+either the block does not begin there, or the console's *base* device interface is
+larger than the PC's — which is what an independent reading of the console headers
+suggests (`ID3D12Device1..8` reported at 83-112, not 44-112). Either way, offsets
+computed by inheriting `ID3D12Device4` and appending cannot be right as they stand,
+and the per-slot logging in §4 is what will show it: the first title that calls a
+console method will log a name that disagrees with the call it made.
+
+Calls were also measured at console-range slots with **no recovered name**:
+108 (2 sites), 119, 132 and 133 (3 sites each), 101 and 86 (1 site each). They are
+left unnamed here on purpose; every call site is in the measurement TSV. Argument
+evidence from decompiling those sites, for whoever names them next:
+
+- **133** — three call sites in three subsystems, six arguments, one of them a
+  pointer to a fixed `.rdata` object rather than a title-allocated structure
+  (`&0x1463fa690`), plus an out-parameter stored into the object. One site passes an
+  array of such pairs (a stack buffer plus the static object) and calls the method on
+  a pointer derived from the device's own address-translation globals
+  (`0x149e1dac0/dac8/dad0`), with a size converted by `>> 10` — i.e. a memory/placement
+  call in the console's virtual-address terms, not a plain PC-shaped one. Another site
+  reaches it from the same helper neighbourhood as `XGSuggestSwizzleMode`
+  (0x140c4b010/0x140c4b030).
+- **132** — called with a single small enum (`3`).
+- **119** — called with an `XMemAlloc`-allocated 128-byte buffer and nothing else,
+  and the caller frees that buffer immediately after: a read into a caller buffer,
+  not a creation path. Cheap to satisfy once its layout is known.
+- **108** — two shapes at two call sites: once with a description whose fields include
+  `0x1000` values, and once *with the device passed as an argument* alongside a stack
+  buffer, `1, 1`, a description and an out-parameter, i.e. the same friend-function
+  shape as `D3D12SerializeVersionedRootSignature`.
+- **50** — takes a *function pointer* (`FUN_142474630`), and is called on the
+  title's fatal-error path next to 132 and a trap, which is where the callback that
+  uses 119 comes from.
+- **101** — reached through the device copy at `0x1475df018`; the call is prepared by
+  loading the slot first (`pcVar3 = *(code **)(*dev + 0x328)`), so a title-side
+  dispatch rather than an inline `call` — worth knowing when reading the TSV, since a
+  load-then-call there means the slot is used without a direct call site.
+
+One console-specific allocation turns up on the 133 path and is worth recording on its
+own: `XMemVirtualAlloc(0, size, 0x42000, 7)` — protection `7`, i.e. `PAGE_EXECUTE_READWRITE`,
+with a function pointer stored into a stack array next to the call. Whatever 133 names,
+that path is allocating executable memory on the console's terms.
 
 ## 5. Verification
 

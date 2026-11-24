@@ -236,6 +236,138 @@ def test_platform_module_discriminates_on_the_host_not_the_target():
         "python must be resolved, not assumed to be `python3` (absent on Windows)"
 
 
+# ------------------------------------------------- device_slot_usage.py -----
+def _ins(addr, ins, comment=""):
+    return (addr, ins, comment)
+
+
+def _dev_ins(addr, ins, target):
+    """An objdump-style comment naming a global. Built by concatenation on purpose: the
+    `(%rip)` in the instruction text is itself a format conversion, so `%`-formatting an
+    instruction string silently eats the next argument."""
+    return (addr, ins, ins + "  # " + hex(target))
+
+
+def test_slot_usage_parsers():
+    """The tool reads objdump text; a parser that is wrong reports slots that are wrong,
+    so each form it depends on is pinned here."""
+    import device_slot_usage as dsu
+
+    assert dsu.rip_global("mov 0x5166a6d(%rip),%rax", "mov  0x5166a6d(%rip),%rax        # 0x1475df048") \
+        == ("rax", 0x1475df048)
+    assert dsu.rip_global("mov (%rcx),%rax", "mov (%rcx),%rax") == (None, None)
+    assert dsu.vtable_load("mov (%rcx),%rax") == ("rcx", "rax")
+    assert dsu.reg_copy("mov %rcx,%rsi") == ("rcx", "rsi")
+    assert dsu.slot_call("call   *0x428(%rax)") == (133, "rax")
+    assert dsu.slot_call("call   *(%rax)") == (0, "rax")
+    assert dsu.slot_call("call   0x144e9b660") == (None, None)
+    assert dsu.written_register("mov %rax,%rdx") == "rdx"
+    assert dsu.written_register("xor %r8d,%r8d") == "r8", "a 32-bit write clears the 64-bit reg"
+    assert dsu.written_register("call   *0x428(%rax)") is None
+    assert dsu.canon_reg("eax") == "rax" and dsu.canon_reg("r9d") == "r9"
+
+
+def test_slot_usage_proves_only_register_tracked_calls():
+    """A call is attributed to the device only when the receiver provably came from the
+    device pointer in the same straight line. A pointer that goes into a struct field
+    must produce no slot at all - a wrong slot is worse than a missing one."""
+    import device_slot_usage as dsu
+
+    dev = 0x1475df048
+    proven = [
+        _dev_ins(0x1000, "mov 0x1234(%rip),%rcx", dev),
+        _ins(0x1007, "mov (%rcx),%rax", "mov (%rcx),%rax"),
+        _ins(0x100a, "call *0x270(%rax)", "call   *0x270(%rax)"),
+    ]
+    got = dsu.scan_device_calls(proven, {dev})
+    assert [c["slot"] for c in got] == [78], got
+
+    # through another register, and through a copy of the device pointer
+    indirect = [
+        _dev_ins(0x2000, "mov 0x1234(%rip),%rax", dev),
+        _ins(0x2007, "mov %rax,%rcx", "mov %rax,%rcx"),
+        _ins(0x200a, "mov (%rcx),%rdx", "mov (%rcx),%rdx"),
+        _ins(0x200d, "call *0x3b8(%rdx)", "call   *0x3b8(%rdx)"),
+    ]
+    assert [c["slot"] for c in dsu.scan_device_calls(indirect, {dev})] == [119]
+
+    # the device pointer stored into a struct field, then a call on the field: unknown
+    unproven = [
+        _dev_ins(0x3000, "mov 0x1234(%rip),%rax", dev),
+        _ins(0x3007, "mov %rax,0x18(%rsi)", "mov %rax,0x18(%rsi)"),
+        _ins(0x300b, "mov (%rsi),%rax", "mov (%rsi),%rax"),
+        _ins(0x300e, "call *0x420(%rax)", "call   *0x420(%rax)"),
+    ]
+    assert [c["slot"] for c in dsu.scan_device_calls(unproven, {dev})] == [None]
+
+    # a stale register: the vtable register is overwritten before the call, so no slot
+    clobbered = [
+        _dev_ins(0x4000, "mov 0x1234(%rip),%rcx", dev),
+        _ins(0x4007, "mov (%rcx),%rax", "mov (%rcx),%rax"),
+        _ins(0x400a, "mov $0x1,%rax", "mov    $0x1,%rax"),
+        _ins(0x4011, "call *0x270(%rax)", "call   *0x270(%rax)"),
+    ]
+    assert [c["slot"] for c in dsu.scan_device_calls(clobbered, {dev})] == [None]
+
+
+def test_slot_usage_function_lookup_and_family_growth():
+    """Slot -> function entry is what makes a slot actionable, and family growth is what
+    finds the per-subsystem copies of the device pointer without swallowing the image."""
+    import device_slot_usage as dsu
+
+    entries = [(0x1000, 0x1100), (0x2000, 0x2100)]
+    assert dsu.containing_function(entries, 0x1050) == (0x1000, 0x100)
+    assert dsu.containing_function(entries, 0x1100) is None      # end is exclusive
+    assert dsu.containing_function(entries, 0x1500) is None
+
+    dev, copy = 0x1475df048, 0x1475df000
+    stream = [
+        _dev_ins(0x5000, "mov 0x1234(%rip),%rax", dev),
+        _dev_ins(0x5007, "mov %rax,0x5678(%rip)", copy),
+        _ins(0x500e, "mov $0x2,%rax", "mov    $0x2,%rax"),
+        _dev_ins(0x5015, "mov %rax,0x9abc(%rip)", 0xdeadbeef),
+    ]
+    assert dsu.grow_device_family(stream, dev) == {dev, copy}
+
+
+def test_measured_device_slots_are_committed():
+    """The measurement the wrapper's slot evidence rests on is committed next to the
+    catalogue, with its provenance, so a reader can check the numbers the docs cite
+    instead of taking them on trust."""
+    tsv = os.path.join(ROOT, "components", "extension-wrapper", "docs",
+                       "device-slot-measurements.tsv")
+    assert os.path.exists(tsv), "missing %s" % tsv
+    lines = open(tsv, encoding="utf-8").read().splitlines()
+    head = [l for l in lines if l.startswith("#")]
+    assert any("sha256" in l for l in head), "the measurement does not name its input"
+    assert any("device_slot_usage" in l for l in head), "the measurement does not name its tool"
+    rows = [l.split("\t") for l in lines if l and not l.startswith("#")]
+    assert rows[0] == ["slot", "call_site", "function_entry", "via_global"], rows[0]
+    slots = {}
+    for slot, call_site, fn, glob in rows[1:]:
+        assert call_site.startswith("0x") and glob.startswith("0x")
+        assert fn == "-" or fn.startswith("0x")
+        slots.setdefault(int(slot), set()).add(call_site)
+    # The frame-pacing trio at 78/79/80 is the anchor that makes the rest readable:
+    # its order is measured, and it fixes where the console's appended block begins.
+    for slot in (78, 79, 80):
+        assert slot in slots, "the frame-trio anchor at slot %d is missing" % slot
+    assert slots[78] != slots[79] and slots[79] != slots[80], "anchors share a call site"
+
+
+def test_measured_device_slots_tool_is_wired_into_the_repo():
+    """The tool must run with no hidden dependency and skip (77) rather than lie when the
+    host has no disassembler."""
+    tool = os.path.join(TOOLS, "device_slot_usage.py")
+    assert os.path.exists(tool)
+    txt = open(tool, encoding="utf-8").read()
+    assert "return 77" in txt, "the tool does not use the suite's SKIP convention"
+    assert "peinfo import PE" in txt, "the tool should reuse the repo's PE parser"
+    import subprocess
+    r = subprocess.run([sys.executable, tool, "--help"], capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+
+
 # ------------------------------------------------------------------- runner --
 def main():
     tests = [(n, f) for n, f in sorted(globals().items())

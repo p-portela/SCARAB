@@ -25,6 +25,22 @@
 //   * SIGNATURES: inferred from the validation messages and from the closest PC
 //     method. Marked per method.
 //
+// MEASURED SLOT ORDINALS (2026-11-23, tools/device_slot_usage.py, data in
+// docs/device-slot-measurements.tsv): a retail Series title's own code calls
+// SetFrameIntervalX at slot 78, ScheduleFrameEventX at 79 and WaitFrameEventX at
+// 80 -- measured from its vtable dispatch, which is the ABI, and consistent with
+// the receivers the vendor samples show for those three names. Two consequences
+// for the layout below:
+//   1. those three ordinals are now evidence, not assumption;
+//   2. a console block that begins immediately after ID3D12Device4 would put them
+//      at 55-57, so either this block does not start there or the console's base
+//      device interface is larger than the PC one. Until that is settled the
+//      wrapper cannot be trusted for calls past slot 54, which is exactly what
+//      the per-slot logging below exists to expose.
+// The same measurement found console-range calls with no name yet at slots 86,
+// 101, 108, 119, 132 and 133 (call sites in the TSV); they are recorded here as
+// unknown rather than guessed into place.
+//
 // The trailing `XSlot_*` methods exist to absorb calls into appended slots whose
 // identity we have not yet established: they log (slot index + register
 // arguments) and return E_NOTIMPL, so an unknown console call is *recorded* rather
