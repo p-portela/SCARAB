@@ -76,6 +76,20 @@ timestamp 0, 1 section ⇒ code-integrity catalog. Relevant to any signature-byp
 
 ## 5. Implication
 
-The package is one runtime-DLL chunk plus metadata. It contains no title executable and no content.
-Every path forward (translation layer or decomp) is blocked on, in order:
-1. content decryption, 2. `game_scarlett_master.exe`, 3. a readable system images image.
+As first extracted, the package was one runtime-DLL chunk plus metadata: no title
+executable, no content. That was the state §3 describes, and the three blockers
+were listed as 1. content decryption, 2. `game_scarlett_master.exe`, 3. a
+readable system image.
+
+Current artifact state (supersedes the list):
+
+| item | state |
+|---|---|
+| `game_scarlett_master.exe` | **recovered** — `early_xmas/game_scarlett_master.exe`, 120,181,760 bytes, decompiled throughout (see `docs/master-exe-surface.md`) |
+| shader library | **recovered** — `shaders.rpf` complete (411,695,600 bytes), extracted to 25,889 `.dxbc` containers / 25,321 RDNA2 streams (`artifacts/shaders/`, `artifacts/rdna2/`) |
+| `common.rpf` / `script.rpf` | **present** (6,642,192 / 4,358,960 bytes) |
+| `data.rpf` / `packs.rpf` / `textures.rpf` | **bodies missing** — only 256 KiB heads in `incoming/` |
+| system image (`gameos.xvd`) | **still encrypted** — unchanged, §4 |
+
+So blockers 1 and 2 are met for the executable and shaders; the remaining
+acquisition blockers are the bulk content RPF bodies and the readable system image.
