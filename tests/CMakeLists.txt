@@ -111,3 +111,38 @@ set_tests_properties(G7_backend_identity PROPERTIES
 # G2 is the build itself: the wrapper compiles only if `override` matches the
 # real header for all 53 device and 76 command-list methods. There is nothing
 # left to run, which is the point - it cannot pass while being wrong.
+
+# ---------------------------------------------------------------------------
+# memory-adapter: the layer's own semantics (flag translation, swizzle policy,
+# the xmem shim) with no GPU. Honest by design: the self-test fails rather
+# than passes when a shape drifts.
+# ---------------------------------------------------------------------------
+add_executable(memory_adapter_selftest "${_t}/memory_adapter_selftest.cpp")
+target_include_directories(memory_adapter_selftest PRIVATE
+  "${CMAKE_SOURCE_DIR}/components/memory-adapter/include")
+target_link_libraries(memory_adapter_selftest PRIVATE scarab_memory_adapter kernel32 user32)
+scarab_configure_exe(memory_adapter_selftest)
+
+add_test(NAME G8_memory_adapter
+  COMMAND "${_launch}" "$<TARGET_FILE:memory_adapter_selftest>")
+set_tests_properties(G8_memory_adapter PROPERTIES
+  WORKING_DIRECTORY "$<TARGET_FILE_DIR:memory_adapter_selftest>")
+
+# ---------------------------------------------------------------------------
+# xg oracle: compare the shim against the vendor xg_xs.dll. The vendor library
+# is the only answer this project has -- reading its decompiled C is not
+# proof, calling it is. Exits 77 (skip) when the vendor DLL is absent.
+# ---------------------------------------------------------------------------
+add_executable(xg_oracle_test "${_t}/xg_oracle_test.cpp")
+target_include_directories(xg_oracle_test PRIVATE
+  "${CMAKE_SOURCE_DIR}/components/memory-adapter/include")
+target_link_libraries(xg_oracle_test PRIVATE scarab_memory_adapter kernel32 user32)
+scarab_configure_exe(xg_oracle_test)
+
+add_test(NAME G9_xg_oracle
+  COMMAND "${_launch}" "$<TARGET_FILE:xg_oracle_test>"
+          "${SCARAB_VENDOR}/x64_dx12/xg_xs.dll")
+set_tests_properties(G9_xg_oracle PROPERTIES
+  SKIP_RETURN_CODE 77
+  WORKING_DIRECTORY "$<TARGET_FILE_DIR:xg_oracle_test>")
+
