@@ -1,0 +1,32 @@
+; SPDX-License-Identifier: GPL-3.0-only
+; Copyright (C) 2026 Pedro Portela
+;
+; The 12 names the title imports from xmem.dll (artifacts/docs/master-exe-surface.md),
+; the one the shim spec documents beyond them (XMemVirtualQuery), and the seven the
+; reference export enumeration shows in a real xmem.dll (Set/GetAllocationHysteresis,
+; GetAllocationStatistics, SetAllocationHooks, MakeTag, PreallocateFreeSpace,
+; GetWin32HeapStatistics). There is no genuine xmem.dll in this tree to compare
+; against, so this list IS the contract: every name is derived from an artifact or a
+; reference enumeration, none is invented. The seven not imported by this title are
+; refusals in src/xmem.cpp -- they return 0 and touch nothing.
+EXPORTS
+    XMemAlloc
+    XMemAllocDefault
+    XMemFree
+    XMemFreeDefault
+    XMemVirtualQuery
+    XMemGetWorkingSetStatistics
+    XMemVirtualAlloc
+    XMemAllocatePhysicalPages
+    XMemFreePhysicalPages
+    XMemMapPhysicalPages
+    XMemMapPhysicalPagesScatter
+    XMemTransferMemory
+    XMemIsToolsMemAvailable
+    XMemSetAllocationHooks
+    XMemGetAllocationStatistics
+    XMemGetAllocationHysteresis
+    XMemSetAllocationHysteresis
+    XMemMakeTag
+    XMemPreallocateFreeSpace
+    XMemGetWin32HeapStatistics

@@ -62,24 +62,44 @@ int main() {
     check(XMemGetWorkingSetStatistics(0, stats) != 0, "XMemGetWorkingSetStatistics succeeds");
     check(*(uint64_t*)(stats + 0) > 0, "budget written");
 
-    // physical pages: numbers written, count in/out
-    uint32_t n = 4;
-    uint64_t pages[4] = {0, 0, 0, 0};
+    // physical pages: 64 KiB units over one lazy section, aliasable
+    uint32_t n = 2;
+    uint64_t pages[2] = {0, 0};
     check(XMemAllocatePhysicalPages(0, &n, pages) != 0, "XMemAllocatePhysicalPages succeeds");
-    check(n == 4u, "count in/out");
-    bool all_nonzero = true;
-    for (uint32_t i = 0; i < 4; i++) all_nonzero = all_nonzero && pages[i] != 0;
-    check(all_nonzero, "page numbers written");
-
-    // physical pages map: reserve then commit
-    constexpr size_t SZ = 4 * 0x10000;
-    void* base = VirtualAlloc(NULL, SZ, MEM_RESERVE, PAGE_NOACCESS);
-    check(base != NULL, "reserve for pages");
-    if (base) {
-        check(XMemMapPhysicalPages(base, 2, nullptr) != NULL, "XMemMapPhysicalPages commits");
-        void* addrs[2] = { base, (uint8_t*)base + 0x10000 };
-        check(XMemMapPhysicalPagesScatter(addrs, 2, nullptr) != 0, "scatter commits");
-        VirtualFree(base, 0, MEM_RELEASE);
+    check(n == 2u && pages[0] != 0 && pages[1] == pages[0] + 1,
+          "two contiguous 64 KiB pages");
+    if (n == 2) {
+        constexpr size_t SZ = 2 * 0x10000;
+        void* a = XMemVirtualAlloc(NULL, SZ, MEM_RESERVE, 0, PAGE_NOACCESS);
+        void* b = XMemVirtualAlloc(NULL, SZ, MEM_RESERVE, 0, PAGE_NOACCESS);
+        check(a && b && a != b, "two 64 KiB reservations");
+        if (a && b) {
+            check(XMemMapPhysicalPages(a, 2, pages) == a, "map 2 pages at the first VA");
+            check(XMemMapPhysicalPages(b, 2, pages) == b, "map the same pages at the second VA");
+            memset(a, 0x5a, SZ);
+            check(((uint8_t*)b)[0] == 0x5a && ((uint8_t*)b)[SZ - 1] == 0x5a,
+                  "the two mappings alias the same pages");
+            ((uint8_t*)a)[0x10000] = 0x11;
+            check(((uint8_t*)a)[0] == 0x5a, "64 KiB is the page unit");
+        }
+        uint32_t n2 = 2;
+        uint64_t pages2[2] = {0, 0};
+        check(XMemAllocatePhysicalPages(0, &n2, pages2) != 0, "allocate 2 more pages");
+        if (n2 == 2) {
+            void* addrs[2] = {XMemVirtualAlloc(NULL, 0x10000, MEM_RESERVE, 0, PAGE_NOACCESS),
+                              XMemVirtualAlloc(NULL, 0x10000, MEM_RESERVE, 0, PAGE_NOACCESS)};
+            check(addrs[0] && addrs[1] &&
+                  XMemMapPhysicalPagesScatter(addrs, 2, pages2) != 0,
+                  "scatter maps one page at each address");
+            check(XMemFreePhysicalPages(2, pages2) != 0, "free the scattered pages");
+        }
+        check(XMemFreePhysicalPages(2, pages) != 0, "free the aliased pages");
+        uint32_t n3 = 2;
+        uint64_t pages3[2] = {0, 0};
+        check(XMemAllocatePhysicalPages(0, &n3, pages3) != 0 &&
+              pages3[0] == pages[0] && pages3[1] == pages[1],
+              "freed pages are reused");
+        if (n3 == 2) XMemFreePhysicalPages(2, pages3);
     }
 
     // query on a live allocation
