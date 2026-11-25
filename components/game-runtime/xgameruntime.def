@@ -1,0 +1,15 @@
+; The names the title resolves from xgameruntime.dll: the GDK bootstrap it finds
+; with GetProcAddress (QueryApiImpl, InitializeApiImpl/Ex/Ex2, UninitializeApiImpl,
+; XErrorReport) and the XGame* strings in the image. Nothing else is invented:
+; the reference HLE runtimes implement a large GDK surface, but this title names
+; only these, and an export nobody calls is a guess.
+EXPORTS
+    InitializeApiImpl
+    InitializeApiImplEx
+    InitializeApiImplEx2
+    QueryApiImpl
+    UninitializeApiImpl
+    XErrorReport
+    XGameRuntimeInitialize
+    XGameUiShowPlayerProfileCardAsync
+    XGameUiShowTextEntryAsync

@@ -154,6 +154,31 @@ Exit criteria
 
 Status: **not met** — documented as a blocked milestone, not faked.
 
+## v0.7.0 — The title's entry point runs through the layer
+
+What it means: the layer owns the title's process from its entry point into its own
+System Init, so every remaining blocker is a named missing shim rather than a mystery.
+
+Exit criteria
+
+| # | criterion | status |
+|---|---|---|
+| 1 | The loader maps the title's own PE (rebased copy, imports zeroed, TLS callbacks cleared) and runs its entry point | **met** — G10: 68 modules, 587 imports, 493 bound, 94 stubbed (named); the CRT init, System Init and graphics DLL loads happen |
+| 2 | The title's static TLS and thread creation see its own block | **met** — the loader points TLS index 0 at the title's block in the entry thread and in every thread it starts through `CreateThread` (an EXE loaded as a DLL would otherwise read the launcher's block) |
+| 3 | The title's GDK bootstrap runs against our `xgameruntime` shim | **met** — `InitializeApiImplEx2(gdk=633600002712, os=65f400001edd, flags=2)` is called; families the shim does not implement are refused by GUID (XASYNC, XSYSTEM, XUSER, XGAME, XNETWORKING) |
+| 4 | A fault is attributable to a named API | **met** — the loader prints a fault report before the host handles it (code, module+RVA, registers, stack scan); the first fatal one is `GameInput.dll` ordinal 1 → Wine's stub `GameInputCreate` returns `E_NOTIMPL`, and the title `js`es into an `int3` |
+| 5 | Windows-native gate | **not met** — same host gap as v0.1.0 #2 |
+| 6 | Known-unimplemented surface enumerated with its failure mode | **partial** — GameInput (fatal), GDK families (refused in boot; the title's own runtime layer reports the missing dependencies) |
+
+Status: **partial** — Linux-host path evidenced; the Windows-native gate and the
+GameInput/GDK surfaces are open. No tag is placed: the ladder's rule is that a tag
+marks a milestone whose criteria are all met, and this one is not.
+
+The evidence run: `scarab_launch --deps <memory-adapter> --deps <game-runtime> --deps <tests> <title>`
+under Wine, with `T:` mapped to a scratch directory so the title's own `.crash.log`
+and minidump are readable. The loader is an honest runner: what it binds, it prints;
+what it refuses, it names.
+
 ## v1.0.0 — A retail title boots and renders
 
 What it means: the layer's reason to exist, demonstrated.
@@ -175,7 +200,9 @@ Exit criteria
 
 Between the pre-milestone tags and **v0.1.0**: six of seven criteria met. The outstanding
 one is the Windows-native build (#2), which needs a Windows host — the same host the
-sample set's bring-up work will need for v0.2.0.
+sample set's bring-up work will need for v0.2.0. Separately, **v0.7.0** (the loader's
+entry point) is in partial: the title runs to System Init with the known fatal surface
+named (GameInput, GDK families). Nothing tagged is placed for it yet.
 
 ## Existing tags
 

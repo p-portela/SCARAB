@@ -140,9 +140,32 @@ target_link_libraries(xg_oracle_test PRIVATE scarab_memory_adapter kernel32 user
 scarab_configure_exe(xg_oracle_test)
 
 add_test(NAME G9_xg_oracle
-  COMMAND "${_launch}" "$<TARGET_FILE:xg_oracle_test>"
+  COMMAND ${_launch} "$<TARGET_FILE:xg_oracle_test>"
           "${SCARAB_VENDOR}/x64_dx12/xg_xs.dll")
 set_tests_properties(G9_xg_oracle PROPERTIES
   SKIP_RETURN_CODE 77
   WORKING_DIRECTORY "$<TARGET_FILE_DIR:xg_oracle_test>")
+
+# ---------------------------------------------------------------------------
+# launcher: a fixture PE with one app-local import and one TLS callback. The
+# loader must map it, bind the import, run the callback and reach main. The
+# same test then points the loader at the title's own exe in --list mode, where
+# our shims must resolve and the console DLLs we do not ship must be named.
+# ---------------------------------------------------------------------------
+add_library(fixture_dep SHARED "${_t}/fixture_dep.c")
+scarab_configure_shared(fixture_dep "${_t}/fixture_dep.def")
+
+add_executable(loader_fixture "${_t}/loader_fixture.c")
+target_link_libraries(loader_fixture PRIVATE fixture_dep)
+scarab_configure_exe(loader_fixture)
+
+add_test(NAME G10_launcher
+  COMMAND "${SCARAB_PYTHON}" "${_t}/test_loader.py" "${_launch}"
+          "$<TARGET_FILE:scarab_launch>" "$<TARGET_FILE:loader_fixture>"
+          "$<TARGET_FILE:xmem>" "$<TARGET_FILE:d3d12_xs>"
+          "${SCARAB_ARTIFACTS}/early_xmas/game_scarlett_master.exe"
+          "${CMAKE_SOURCE_DIR}/tools" "$<TARGET_FILE:xgameruntime>")
+set_tests_properties(G10_launcher PROPERTIES
+  SKIP_RETURN_CODE 77
+  WORKING_DIRECTORY "$<TARGET_FILE_DIR:loader_fixture>")
 
