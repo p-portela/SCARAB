@@ -1,0 +1,5 @@
+; The one export the title resolves: DStorageGetFactory. Nothing else is
+; invented -- the reference runtimes implement the full DirectStorage surface,
+; but this title names only this one, and an export nobody calls is a guess.
+EXPORTS
+    DStorageGetFactory

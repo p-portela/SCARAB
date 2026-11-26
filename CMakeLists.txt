@@ -50,6 +50,7 @@ add_subdirectory(components/shader-bridge)
 add_subdirectory(components/memory-adapter)
 add_subdirectory(components/game-runtime)
 add_subdirectory(components/game-input)
+add_subdirectory(components/xcrdapi)
 add_subdirectory(components/launcher)
 
 option(SCARAB_BUILD_TESTS "Build the test executables and register the CTest gates" ON)
