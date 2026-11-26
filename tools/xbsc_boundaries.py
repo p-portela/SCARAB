@@ -73,8 +73,10 @@ def vendor_boundaries(words, workdir):
             # instruction start. When the just-printed line carries an 8-digit
             # hex literal, it still consumes word j, so the next start is j+1.
             nxt = j
-            if re.search(r"0x[0-9A-Fa-f]{8}", last.get(j, "")) and j + 1 < len(words):
-                nxt = j + 1
+            if re.search(r"0x[0-9A-Fa-f]{8}", last.get(j, "")) or \
+               re.search(r"v0, v0, v0, v0", last.get(j, "")):
+                if j + 1 < len(words):
+                    nxt = j + 1
             if nxt < len(words):
                 bounds.add(nxt)
             prev = n

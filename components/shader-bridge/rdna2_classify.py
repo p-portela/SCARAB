@@ -94,7 +94,10 @@ def instr_length(words, i):
     w = words[i]
     fam = family(w)
     if fam == "MIMG":
-        return 2, fam
+        # MIMG length = 2 + nsa (see RdnaImageOpDecoder); the vendor merges the
+        # payload word into the instruction.
+        nsa = (w >> 1) & 0x3
+        return 2 + nsa, fam
     if fam in TWO_WORD:
         return 2, fam
     if LITERAL_OPERANDS and fam in LITERAL_FAMS:
