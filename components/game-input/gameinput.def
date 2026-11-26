@@ -1,0 +1,7 @@
+; SPDX-License-Identifier: GPL-3.0-only
+; Copyright (C) 2026 Pedro Portela
+;
+; The one export the title resolves: GameInputCreate, imported by ordinal 1
+; (GameInput.dll!#1). Pinned to ordinal 1 explicitly, as the title binds.
+EXPORTS
+    GameInputCreate @1

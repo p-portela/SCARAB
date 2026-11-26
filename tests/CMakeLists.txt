@@ -159,12 +159,18 @@ add_executable(loader_fixture "${_t}/loader_fixture.c")
 target_link_libraries(loader_fixture PRIVATE fixture_dep)
 scarab_configure_exe(loader_fixture)
 
+# The game-input shim is wired in by its own step; until the target exists the
+# check below reports SKIP and the rest of G10 is unaffected.
+set(_gdk_dlls "$<TARGET_FILE:xgameruntime>")
+if (TARGET gameinput)
+    list(APPEND _gdk_dlls "$<TARGET_FILE:gameinput>")
+endif()
 add_test(NAME G10_launcher
   COMMAND "${SCARAB_PYTHON}" "${_t}/test_loader.py" "${_launch}"
           "$<TARGET_FILE:scarab_launch>" "$<TARGET_FILE:loader_fixture>"
           "$<TARGET_FILE:xmem>" "$<TARGET_FILE:d3d12_xs>"
           "${SCARAB_ARTIFACTS}/early_xmas/game_scarlett_master.exe"
-          "${CMAKE_SOURCE_DIR}/tools" "$<TARGET_FILE:xgameruntime>")
+          "${CMAKE_SOURCE_DIR}/tools" ${_gdk_dlls})
 set_tests_properties(G10_launcher PROPERTIES
   SKIP_RETURN_CODE 77
   WORKING_DIRECTORY "$<TARGET_FILE_DIR:loader_fixture>")

@@ -11,7 +11,7 @@ Two runs:
     passing silently.
 
 Usage: test_loader.py [launcher] scarab_launch.exe loader_fixture.exe \
-           xmem.dll d3d12_xs.dll [title.exe [tools_dir [xgameruntime.dll]]]
+           xmem.dll d3d12_xs.dll [title.exe [tools_dir [xgameruntime.dll [gameinput.dll]]]]
   launcher is SCARAB_TEST_LAUNCHER (empty on Windows, "wine" elsewhere).
 """
 # SPDX-License-Identifier: GPL-3.0-only
@@ -92,6 +92,22 @@ def title():
     return 0
 
 
+# --- gameinput.dll's export surface ---------------------------------------
+def gameinput_surface():
+    gi = pathlib.Path(args[7]) if len(args) > 7 else None
+    tools = pathlib.Path(args[5]) if len(args) > 5 else None
+    if gi is None or tools is None or not gi.exists() or not tools.exists():
+        print("SKIP gameinput.dll or tools/ not present")
+        return 0
+    sys.path.insert(0, str(tools))
+    from peinfo import PE
+    names = {n for n, _o, _r in PE(str(gi)).exports()["names"]}
+    want = {"GameInputCreate"}
+    missing = want - names
+    check(not missing, "gameinput.dll exports GameInputCreate", str(sorted(missing)))
+    return 0
+
+
 # --- xmem.dll's export surface ---------------------------------------------
 def xmem_surface():
     xmem = pathlib.Path(args[2]) if len(args) > 2 else None
@@ -138,6 +154,7 @@ rc = fixture()
 if rc == 0:
     xmem_surface()
     gdk_surface()
+    gameinput_surface()
 if rc == 0:
     rc = title()
 for f in fails:
