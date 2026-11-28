@@ -59,14 +59,19 @@ int main() {
         XMemFree(q, 0x00000000u);
     }
 
-    // working set statistics: non-null, budget written
-    uint8_t stats[0x50];
-    check(XMemGetWorkingSetStatistics(0, stats) != 0, "XMemGetWorkingSetStatistics succeeds");
-    check(*(uint64_t*)(stats + 0) > 0, "budget written");
+    // working set statistics: the real struct, with the usage we can account for.
+    // Limits are deliberately left zero until the budget policy exists (T04), so
+    // that is asserted too -- a nonzero limit here would be an invented number.
+    XMEM_WORKING_SET_STATISTICS stats;
+    memset(&stats, 0, sizeof(stats));
+    check(XMemGetWorkingSetStatistics(XMEM_WORKING_SET_ALL, &stats) != 0,
+          "XMemGetWorkingSetStatistics succeeds");
+    check(stats.GameUsedPeak > 0, "peak title usage accounted");
+    check(stats.GameLimit == 0, "limits stay zero until the budget policy exists");
 
     // physical pages: 64 KiB units over one lazy section, aliasable
-    uint32_t n = 2;
-    uint64_t pages[2] = {0, 0};
+    ULONG_PTR n = 2;
+    ULONG_PTR pages[2] = {0, 0};
     check(XMemAllocatePhysicalPages(0, &n, pages) != 0, "XMemAllocatePhysicalPages succeeds");
     check(n == 2u && pages[0] != 0 && pages[1] == pages[0] + 1,
           "two contiguous 64 KiB pages");
@@ -84,8 +89,8 @@ int main() {
             ((uint8_t*)a)[0x10000] = 0x11;
             check(((uint8_t*)a)[0] == 0x5a, "64 KiB is the page unit");
         }
-        uint32_t n2 = 2;
-        uint64_t pages2[2] = {0, 0};
+        ULONG_PTR n2 = 2;
+        ULONG_PTR pages2[2] = {0, 0};
         check(XMemAllocatePhysicalPages(0, &n2, pages2) != 0, "allocate 2 more pages");
         if (n2 == 2) {
             void* addrs[2] = {XMemVirtualAlloc(NULL, 0x10000, MEM_RESERVE, 0, PAGE_NOACCESS),
@@ -96,17 +101,42 @@ int main() {
             check(XMemFreePhysicalPages(2, pages2) != 0, "free the scattered pages");
         }
         check(XMemFreePhysicalPages(2, pages) != 0, "free the aliased pages");
-        uint32_t n3 = 2;
-        uint64_t pages3[2] = {0, 0};
+        ULONG_PTR n3 = 2;
+        ULONG_PTR pages3[2] = {0, 0};
         check(XMemAllocatePhysicalPages(0, &n3, pages3) != 0 &&
               pages3[0] == pages[0] && pages3[1] == pages[1],
               "freed pages are reused");
         if (n3 == 2) XMemFreePhysicalPages(2, pages3);
     }
 
-    // query on a live allocation
+    // Regression: the LAST page number in the range must be mappable and must
+    // alias. The section offset is (page - FIRST_PAGE_NUM) * 64 KiB; using the
+    // raw page number put the final page one page past the end of the section,
+    // so it silently fell back to a private commit and aliasing broke for
+    // exactly one page -- the failure mode a 2-page test cannot see.
+    {
+        constexpr ULONG_PTR TOTAL = (16ull << 30) / 0x10000ull;  // one entry per 64 KiB page
+        static ULONG_PTR all_pages[TOTAL];
+        ULONG_PTR want = TOTAL;
+        check(XMemAllocatePhysicalPages(0, &want, all_pages) != 0 && want == TOTAL,
+              "allocate the whole 16 GiB page range");
+        ULONG_PTR last = all_pages[TOTAL - 1];
+        void* la = XMemVirtualAlloc(NULL, 0x10000, MEM_RESERVE, 0, PAGE_NOACCESS);
+        void* lb = XMemVirtualAlloc(NULL, 0x10000, MEM_RESERVE, 0, PAGE_NOACCESS);
+        if (la && lb) {
+            check(XMemMapPhysicalPages(la, 1, &last) == la, "map the last page at A");
+            check(XMemMapPhysicalPages(lb, 1, &last) == lb, "map the last page at B");
+            *(volatile uint8_t*)la = 0x77;
+            check(*(volatile uint8_t*)lb == 0x77, "the last page aliases");
+        }
+        check(XMemFreePhysicalPages(TOTAL, all_pages) != 0, "free the whole range");
+    }
+
+    // query on a live allocation (XMEM_BASIC_INFORMATION, not MEMORY_BASIC_
+    // INFORMATION: the console struct appends XMemFlags/TagCode/TagFourCC)
     void* vq = VirtualAlloc(NULL, 0x10000, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-    MEMORY_BASIC_INFORMATION mbi;
+    XMEM_BASIC_INFORMATION mbi;
+    memset(&mbi, 0, sizeof(mbi));
     check(vq && XMemVirtualQuery(GetCurrentProcess(), vq, &mbi) != 0 &&
           mbi.Protect == PAGE_READWRITE, "XMemVirtualQuery on live memory");
     if (vq) VirtualFree(vq, 0, MEM_RELEASE);
