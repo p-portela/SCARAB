@@ -2,6 +2,7 @@
 build/
 out/
 cmake-build-*/
+build.stale-*/
 *.o
 *.obj
 *.a
@@ -38,3 +39,9 @@ __pycache__/
 *.swp
 Thumbs.db
 desktop.ini
+
+# local-only workflow scripts: the LAN deploy pipeline is machine-specific and is
+# never published. Ignored in place (they compute the repo root from their own
+# path, so they must stay at scripts/).
+/scripts/pipeline.sh
+/scripts/deploy-runner.ps1

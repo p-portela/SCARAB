@@ -14,11 +14,13 @@
 static int fails = 0;
 static void check(bool ok, const char* what) {
     printf("%s %s\n", ok ? "ok  " : "FAIL", what);
+    fflush(stdout);
     if (!ok) fails++;
 }
 
 int main() {
     printf("memory-adapter self-test\n");
+    fflush(stdout);
 
     // --- flag translation: honest report ---
     XtlFlagTranslation t;
