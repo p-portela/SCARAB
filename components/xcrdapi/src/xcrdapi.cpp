@@ -39,11 +39,19 @@ bool guid_eq(const GUID& a, const GUID& b) {
            memcmp(a.Data4, b.Data4, 8) == 0;
 }
 
+// IID_IUnknown. Every COM object must answer it; middleware that validates by QI
+// treats E_NOINTERFACE as "not a usable object".
+static bool guid_is_iunknown(const GUID& g) {
+    static const GUID unk = {0x00000000, 0x0000, 0x0000,
+                             {0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46}};
+    return guid_eq(g, unk);
+}
+
 HRESULT factory_qi(Factory* self, const GUID* riid, void** out) {
     if (!out) return E_POINTER;
     *out = nullptr;
     if (!riid) return E_INVALIDARG;
-    if (!guid_eq(g_factory_iid, *riid)) {
+    if (!guid_eq(g_factory_iid, *riid) && !guid_is_iunknown(*riid)) {
         log("IDStorageFactoryX::QueryInterface (unknown IID)");
         return E_NOINTERFACE;
     }
@@ -121,7 +129,13 @@ extern "C" HRESULT DStorageGetFactory(const GUID* riid, void** out) {
     if (!out) return E_POINTER;
     *out = nullptr;
     if (!riid) return E_INVALIDARG;
-    if (g_factory_iid.Data1 == 0 && g_factory_iid.Data2 == 0 && g_factory_iid.Data3 == 0)
+    // Latch the first *real* factory IID as the one this shim supports. An
+    // IUnknown request must not poison that: a title that QIs IUnknown first
+    // would otherwise leave the factory answering IUnknown only, and every later
+    // call with the real IID would fail.
+    if (!guid_is_iunknown(*riid) &&
+        g_factory_iid.Data1 == 0 && g_factory_iid.Data2 == 0 && g_factory_iid.Data3 == 0) {
         g_factory_iid = *riid;
+    }
     return factory_qi(&phantom_factory(), riid, out);
 }

@@ -65,11 +65,17 @@ static bool guid_eq(const GUID& a, const GUID& b) {
            a.Data4[6] == b.Data4[6] && a.Data4[7] == b.Data4[7];
 }
 
+// Every COM object must answer IID_IUnknown: middleware that validates by QI
+// treats E_NOINTERFACE as "this object is not usable". The family's own
+// interface and IUnknown both resolve to the same object.
+static const GUID IID_IUNKNOWN_ = {0x00000000, 0x0000, 0x0000,
+                                   {0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46}};
+
 static HRESULT gdk_qi(GdkObject* self, const GUID* riid, void** out) {
     if (!out) return E_POINTER;
     *out = nullptr;
     if (!riid) return E_INVALIDARG;
-    if (!guid_eq(self->iid, *riid)) return E_NOINTERFACE;
+    if (!guid_eq(self->iid, *riid) && !guid_eq(IID_IUNKNOWN_, *riid)) return E_NOINTERFACE;
     *out = self;
     return S_OK;
 }
@@ -101,6 +107,9 @@ static const void* GDK_VTBL[] = {
     (const void*)&gdk_refused, (const void*)&gdk_refused, (const void*)&gdk_refused,
     (const void*)&gdk_refused, (const void*)&gdk_refused,
 };
+// Derived, never written down: an earlier revision's commit message claimed 40
+// slots while the table held 41. Sizing it here keeps the number honest.
+static constexpr size_t GDK_VTBL_LEN = sizeof(GDK_VTBL) / sizeof(GDK_VTBL[0]);
 
 struct Family {
     const char* name;
@@ -128,6 +137,8 @@ static Family g_families[] = {
 };
 
 static void init_families() {
+    printf("xgameruntime: %zu vtable slots per family object\n", GDK_VTBL_LEN);
+    fflush(stdout);
     for (auto& f : g_families) {
         f.object.vtable = const_cast<void**>(GDK_VTBL);
         f.object.name = f.name;
@@ -140,7 +151,10 @@ extern "C" HRESULT QueryApiImpl(const GUID* clsid, const GUID* iid, void** out) 
     if (!clsid || !iid) return E_INVALIDARG;
     init_families();
     for (auto& f : g_families) {
-        if (guid_eq(f.clsid, *clsid) && guid_eq(f.iid, *iid)) {
+        // IUnknown resolves too: QueryApiImpl is "create the object and QI it",
+        // so refusing IUnknown here would contradict gdk_qi answering it.
+        if (guid_eq(f.clsid, *clsid) &&
+            (guid_eq(f.iid, *iid) || guid_eq(IID_IUNKNOWN_, *iid))) {
             *out = &f.object;
             return S_OK;
         }

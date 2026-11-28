@@ -40,13 +40,27 @@ bool guid_eq(const GUID* a, const GUID* b) {
 }
 
 uint64_t now_us() {
-    LARGE_INTEGER freq, now;
-    QueryPerformanceFrequency(&freq);
+    // The counter frequency and the origin are fixed for the process. Holding
+    // them in one function-local static struct means the C++11 initialisation
+    // guard covers them, so this stays correct once callbacks are delivered from
+    // another thread (the reading-callback thread the header plans). The manual
+    // "if (!init)" flag this replaced was a data race waiting for that thread.
+    struct Clock {
+        uint64_t freq;
+        uint64_t origin;
+        Clock() {
+            LARGE_INTEGER f{}, n{};
+            QueryPerformanceFrequency(&f);
+            QueryPerformanceCounter(&n);
+            freq = static_cast<uint64_t>(f.QuadPart);
+            origin = static_cast<uint64_t>(n.QuadPart);
+        }
+    };
+    static const Clock clock;
+    LARGE_INTEGER now{};
     QueryPerformanceCounter(&now);
-    static uint64_t origin = 0;
-    static bool init = false;
-    if (!init) { origin = now.QuadPart; init = true; }
-    return static_cast<uint64_t>((now.QuadPart - origin) * 1000000ULL / freq.QuadPart);
+    return static_cast<uint64_t>((static_cast<uint64_t>(now.QuadPart) - clock.origin) *
+                                 1000000ULL / clock.freq);
 }
 
 // ---------------------------------------------------------------------------
@@ -283,11 +297,14 @@ static HRESULT input_register_device_callback(Input*, void* device, uint32_t kin
                                              uint32_t filter, uint32_t enumeration,
                                              void* context, DeviceCallback callback,
                                              uint64_t* token) {
-    uint64_t t = next_token();
-    if (token) *token = t;
     log("IGameInput::RegisterDeviceCallback", kind, filter, enumeration);
     if (!callback) return E_INVALIDARG;
     if (kind != KIND_GAMEPAD) return E_NOTIMPL;
+    // The token is only handed out once the registration is going to succeed, so
+    // a caller that checks the HRESULT never holds a token for a registration
+    // that did not happen.
+    uint64_t t = next_token();
+    if (token) *token = t;
     if (enumeration == 1) {  // async enumeration: no thread to deliver from
         printf("gameinput: async enumeration is not supported (blocking only)\n");
         fflush(stdout);
