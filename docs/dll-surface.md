@@ -79,9 +79,27 @@ and comparison must be interface/vtable-oriented, not export-oriented.
 
 ## 6. Open items
 
-- `XAudio2_9.dll` `ord#1` — unresolved; needs that DLL's export table.
-- console-side `d3d12_xs.dll` — **not obtainable from current artifacts** (see `package-spec.md` §4).
-- Whether the public console SDK bundles Scarlett headers: the public console SDK zip ships an installer bundle whose
-  `SetupScripts/` include `ExtractconsoleOneDKs.ps1` / `InstallconsoleOneDKs.ps1`, i.e. console DK payload is
-  present in hashed `.cab` files. **Unverified** whether Scarlett (not just console One) headers are included,
-  and whether extracting them is licensed. Worth checking before any manual struct RE.
+Items 1 and 2 were open only because the corresponding Microsoft binaries were not in this tree. Both
+are now resolved from the GDK installation rather than from a leak.
+
+- ~~`XAudio2_9.dll` `ord#1` unresolved~~ — **resolved: `XAudio2Create`.** `Bink2Scarlett.dll` imports
+  it by ordinal with no name. The GDK ships `XAudio2_9.dll` (589,824 bytes) with 10 exports at ordinal
+  base 1, and ordinal 1 is `XAudio2Create` (2 `CreateAudioReverb`, 3 `CreateAudioVolumeMeter`,
+  4 `CreateFX`, 5 `X3DAudioCalculate`, 6 `X3DAudioInitialize`, 7 `CreateAudioReverbV2_8`,
+  8 `XAudio2CreateV2_9`, 9 `XAudio2CreateWithVersionInfo`, 10 `XAudio2CreateWithSharedContexts`),
+  read straight out of the export directory (`AddressOfNames` +32, `AddressOfNameOrdinals` +36).
+  **No shim is needed for this one:** `XAudio2_9.dll` is a stock Windows component, so the host's own
+  copy satisfies the ordinal import — the shim surface is one item smaller than it looked.
+- ~~console-side `d3d12_xs.dll` not obtainable~~ — **resolved.** The GDK 261000 console runtime is present
+  (`xbox/bin/gen9/d3d12_xs.dll`, 51,656 bytes, 116 exports) with its import library
+  (`xbox/lib/gen9/d3d12_xs.lib`) and a matching `d3d12_xs.pdb`. The export-contract gate now verifies
+  against it: 116/116 names + ordinals and 93/93 GUID bytes identical — and the same result against the
+  rip's copy, so both builds agree on the contract.
+- **Console headers are available directly, so no `.cab` extraction is needed.** The installed GDK (with
+  console extensions, 261000) carries the console headers (`xbox/include/gen9/`: `d3d12_xs.h`,
+  `d3d12shader_xs.h`, `d3dx12_xs.h`, `dxcapi_xs.h`, `xg_xs.h`, `aco_xbox.h`, `aco_compute_pso.h`,
+  `dstorage_xs.h`) and the console system DLLs **with their PDBs** (`GXDK/gameKit/symbols/`: `d3d12_xs`,
+  `XAudio2_9`, `ntdll`, `kernelbase`, `combase`, `audioses`, `mfh264dec`, `mfhevcdec`, `mfreadwrite`,
+  `xdxr`, `hix_xs`, `gamecoreclient`; and `GXDK/toolKit/symbols/Scarlett/`: `xbsc_xs.pdb`,
+  `dxcompiler_xs.pdb`, `dxc.pdb`, `xdxrofflinebvh.pdb`). Whether the installer bundle's hashed `.cab`
+  files contained the console payload is therefore moot for this tree.

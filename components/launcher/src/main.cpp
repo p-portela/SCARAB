@@ -259,21 +259,31 @@ extern "C" void stub_called(const char* name) {
 // x64 trampoline: save the argument registers, name the symbol, return 0.
 // `mov r11, imm64` keeps the name out of the argument registers; five pushes
 // leave rsp 16-byte aligned for the call.
+// The stub pool lives at file scope so it can be write-protected once binding is
+// done. Stubs are only created while imports are being bound; nothing writes them
+// afterwards, so a permanent RWX region is an unnecessary target.
+static BYTE* g_stub_pool = nullptr;
+static size_t g_stub_used = 0;
+static bool g_stub_pool_sealed = false;
+constexpr size_t STUB_SLOT = 48;
+constexpr size_t STUB_POOL = 64 * 1024;
+
 FARPROC make_stub(const std::string& name) {
-    static BYTE* pool = nullptr;
-    static size_t used = 0;
-    constexpr size_t SLOT = 48;
-    constexpr size_t POOL = 64 * 1024;
-    if (!pool)
-        pool = static_cast<BYTE*>(
-            VirtualAlloc(nullptr, POOL, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
-    if (!pool || used + SLOT > POOL) return nullptr;
+    if (!g_stub_pool)
+        g_stub_pool = static_cast<BYTE*>(
+            VirtualAlloc(nullptr, STUB_POOL, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
+    if (!g_stub_pool || g_stub_used + STUB_SLOT > STUB_POOL) return nullptr;
+    // A late stub (created after sealing) reopens the pool just for the write and
+    // re-seals it below, so the read+execute guarantee is never quietly dropped.
+    DWORD reopened = 0;
+    if (g_stub_pool_sealed)
+        VirtualProtect(g_stub_pool, STUB_POOL, PAGE_EXECUTE_READWRITE, &reopened);
     char* copy = static_cast<char*>(malloc(name.size() + 1));
     if (!copy) return nullptr;
     memcpy(copy, name.c_str(), name.size() + 1);
 
-    BYTE* code = pool + used;
-    used += SLOT;
+    BYTE* code = g_stub_pool + g_stub_used;
+    g_stub_used += STUB_SLOT;
     size_t i = 0;
     auto emit = [&](std::initializer_list<BYTE> bytes) {
         for (BYTE b : bytes) code[i++] = b;
@@ -291,7 +301,27 @@ FARPROC make_stub(const std::string& name) {
     emit({0x41, 0x59, 0x41, 0x58, 0x5A, 0x59, 0x58});  // pop r9 r8 rdx rcx rax
     emit({0x31, 0xC0, 0xC3});                    // xor eax, eax; ret
     FlushInstructionCache(GetCurrentProcess(), code, i);
+    if (g_stub_pool_sealed) {
+        DWORD ignored = 0;
+        VirtualProtect(g_stub_pool, STUB_POOL, PAGE_EXECUTE_READ, &ignored);
+    }
     return reinterpret_cast<FARPROC>(code);
+}
+
+// Binding writes the stubs and nothing writes them afterwards, so drop the pool to
+// read+execute. A permanent RWX region turns any stray write anywhere in the title
+// into code execution; there is no reason to hand that over.
+void seal_stub_pool() {
+    if (!g_stub_pool || g_stub_pool_sealed) return;
+    DWORD old = 0;
+    if (!VirtualProtect(g_stub_pool, STUB_POOL, PAGE_EXECUTE_READ, &old)) {
+        fputs("scarab_launch: could not write-protect the import stub pool\n", stderr);
+        return;
+    }
+    g_stub_pool_sealed = true;
+    printf("scarab_launch: import stub pool sealed RX (%zu of %zu bytes used)\n",
+           g_stub_used, STUB_POOL);
+    fflush(stdout);
 }
 
 // The console guarantees large pages and exposes a physical-memory pool, so the
@@ -545,6 +575,7 @@ LONG WINAPI crash_report(EXCEPTION_POINTERS* ep) {
 DWORD WINAPI run_thread(void* param) {
     auto* r = static_cast<Run*>(param);
     fflush(stdout); // the bind report must survive a trap in the title
+    seal_stub_pool(); // binding is finished, so the stubs are final
     if (r->tls_index_va) {
         auto* idx = reinterpret_cast<DWORD*>(r->base + (r->tls_index_va - r->preferred_base));
         g_title_tls_index.store(*idx);
